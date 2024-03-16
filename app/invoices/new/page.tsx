@@ -93,15 +93,17 @@ const NewInvoicePage = () => {
 
   const handleChange = (event) => {
     delete event.id;
+    event.qty = 1;
     setSelectedItems((prevState) => [...prevState, Object.assign({}, event)]);
   };
 
   const addNew = (text) => {
     let value = { description: text };
     setSearchItems((prevState) => [...prevState, Object.assign({}, value)]);
-    setSelectedItems((prevState) => [...prevState, Object.assign({}, value)]);
-
     axios.post("/api/searchItems", value);
+
+    value.qty = 1;
+    setSelectedItems((prevState) => [...prevState, Object.assign({}, value)]);
 
     // console.log(event);
   };
@@ -317,7 +319,7 @@ const NewInvoicePage = () => {
                     <div className="mr-1">
                       <TextField.Input
                         style={{ width: "50px" }}
-                        // defaultValue={"title"}
+                        defaultValue={1}
                         placeholder="Qty"
                         onChange={(e) => (
                           (item.qty = parseInt(e.target.value)),
