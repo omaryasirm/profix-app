@@ -16,7 +16,6 @@ const RenderInvoicePage = ({ params }: Props) => {
   const myFontSize = "10px";
   const router = useRouter();
   const ref = useRef<HTMLDivElement>();
-  const onPrint = (event) => {};
 
   const [isLoading, setIsLoading] = useState(true);
 
