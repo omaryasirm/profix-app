@@ -1,0 +1,11 @@
+.radix-themes {
+    --default-font-family: var(--font-inter);
+}
+
+@media print {
+    body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+
