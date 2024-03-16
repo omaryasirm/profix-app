@@ -8,6 +8,7 @@ import {
   Table,
   Flex,
   Select,
+  TableCell,
 } from "@radix-ui/themes";
 import { createInvoiceSchema } from "@/app/validationSchemas";
 import { useRouter } from "next/navigation";
@@ -73,7 +74,7 @@ const NewInvoicePage = () => {
       setIsSubmitting(true);
       var res = await axios.post("/api/invoices", data);
       console.log(res);
-      router.push(`/invoices/render/${res.data.id}`);
+      router.push(`/invoices/${res.data.id}/render`);
       // Router.push({
       //   pathname: "/invoices/render",
       //   query: { user_id: this.props.data.member.user.id },
@@ -105,16 +106,24 @@ const NewInvoicePage = () => {
   };
 
   const calcAmount = (item) => {
+    if (isNaN(item.qty)) item.qty = 0;
+    if (isNaN(item.rate)) item.rate = 0;
     item.amount = item.qty * item.rate;
+
+    console.log(item.qty);
+    console.log(item.rate);
+    console.log(item.amount);
 
     setSubtotal(getItemsAmount());
   };
 
   const calcTax = () => {
+    if (isNaN(tax)) setTax(0);
     return (subtotal * tax) / 100;
   };
 
   const calcDiscount = () => {
+    if (isNaN(discount)) setDiscount(0);
     return (subtotal * discount) / 100;
   };
 
@@ -125,10 +134,18 @@ const NewInvoicePage = () => {
   const getItemsAmount = () => {
     let temp = 0;
     selectedItems.forEach((value) => {
+      if (isNaN(value.amount)) value.amount = 0;
       temp += value.amount;
     });
 
     return temp;
+  };
+
+  const removeItem = (index: number) => {
+    // const array = selectedItems.splice(index, 1);
+    console.log(array);
+    // setSelectedItems((prevState) => .filter(item => item.id !== id));
+    console.log(selectedItems);
   };
 
   const filteredPeople =
@@ -146,11 +163,7 @@ const NewInvoicePage = () => {
   ) : (
     <div className="max-w-xl space-y-3 mt-3">
       <p className="font-medium text-lg">Create Invoice</p>
-      {error && (
-        <Callout.Root color="red" className="mb-5">
-          <Callout.Text>{error}</Callout.Text>
-        </Callout.Root>
-      )}
+
       {/* <form className="space-y-3" onSubmit={onSubmit}> */}
       <TextField.Root>
         <TextField.Input
@@ -223,7 +236,7 @@ const NewInvoicePage = () => {
             >
               <Combobox.Button
                 onClick={(value) => addNew(query)}
-                className="relative cursor-default ml-3 mb-10 my-button"
+                className="relative cursor-default ml-3 my-button"
               >
                 Add
                 {/* <Button
@@ -279,25 +292,61 @@ const NewInvoicePage = () => {
         </div>
       </Combobox>
 
-      <Table.Root variant="surface">
-        <Table.Header>
-          <Table.Row>
-            <Table.ColumnHeaderCell width={20}>Id</Table.ColumnHeaderCell>
-            <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
-            <Table.ColumnHeaderCell width={70}>Qty</Table.ColumnHeaderCell>
+      {selectedItems.length > 0 ? (
+        <Table.Root variant="surface">
+          <Table.Header>
+            <Table.Row>
+              <Table.ColumnHeaderCell width={20}>No</Table.ColumnHeaderCell>
+              <Table.ColumnHeaderCell>Name</Table.ColumnHeaderCell>
+              {/* <Table.ColumnHeaderCell width={70}>Qty</Table.ColumnHeaderCell>
             <Table.ColumnHeaderCell width={100}>Rate</Table.ColumnHeaderCell>
-            <Table.ColumnHeaderCell width={80}>Amount</Table.ColumnHeaderCell>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body style={{ verticalAlign: "middle" }}>
-          {selectedItems.map((item, index) => (
-            <Table.Row key={index}>
-              <Table.Cell>
-                {/* <Link href={`/issues/${issue.id}`} childern={issue.title} /> */}
-                {index + 1}
-              </Table.Cell>
-              <Table.Cell>{item.description}</Table.Cell>
-              <Table.Cell>
+            <Table.ColumnHeaderCell width={80}>Amount</Table.ColumnHeaderCell> */}
+            </Table.Row>
+          </Table.Header>
+          <Table.Body style={{ verticalAlign: "middle" }}>
+            {selectedItems.map((item, index) => (
+              <Table.Row key={index}>
+                <Table.Cell>
+                  {/* <Link href={`/issues/${issue.id}`} childern={issue.title} /> */}
+                  {index + 1}
+                </Table.Cell>
+                <Table.Cell>
+                  <div>{item.description}</div>
+                  <Flex className="mt-1" align={"center"}>
+                    <div className="mr-1">
+                      <TextField.Input
+                        style={{ width: "50px" }}
+                        // defaultValue={"title"}
+                        placeholder="Qty"
+                        onChange={(e) => (
+                          (item.qty = parseInt(e.target.value)),
+                          calcAmount(item)
+                        )}
+                      />
+                    </div>
+                    <div className="mr-2">
+                      <TextField.Input
+                        // defaultValue={"title"}
+                        style={{ width: "100px" }}
+                        placeholder="Rate"
+                        onChange={(e) => (
+                          (item.rate = parseInt(e.target.value)),
+                          calcAmount(item)
+                        )}
+                      />
+                    </div>
+                    Rs.{item.amount == null ? "0" : item.amount}
+                    <div style={{ textAlign: "right", width: "100%" }}>
+                      <button onClick={() => removeItem(index)}>
+                        <span className="material-symbols-outlined">
+                          delete
+                        </span>
+                      </button>
+                    </div>
+                  </Flex>
+                </Table.Cell>
+
+                {/* <Table.Cell>
                 <TextField.Root>
                   <TextField.Input
                     // defaultValue={"title"}
@@ -319,14 +368,17 @@ const NewInvoicePage = () => {
                   />
                 </TextField.Root>
               </Table.Cell>
-              <Table.Cell>Rs.{item.amount}</Table.Cell>
-              {/* <Table.Cell className="hidden md:table-cell">
+              <Table.Cell>Rs.{item.amount}</Table.Cell> */}
+                {/* <Table.Cell className="hidden md:table-cell">
                   {issue.createdAt.toDateString()}
                 </Table.Cell> */}
-            </Table.Row>
-          ))}
-        </Table.Body>
-      </Table.Root>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table.Root>
+      ) : (
+        <div></div>
+      )}
       <p className="font-bold">Subtotal: Rs.{subtotal}</p>
       <Flex align="center">
         <span>%</span>
@@ -350,6 +402,11 @@ const NewInvoicePage = () => {
       </Flex>
 
       <p className="font-bold">Total: Rs.{calcTotal()}</p>
+      {error && (
+        <Callout.Root color="red" className="mb-5">
+          <Callout.Text>{error}</Callout.Text>
+        </Callout.Root>
+      )}
       <Button
         disabled={isSubmitting}
         onClick={onCreateInvoice}

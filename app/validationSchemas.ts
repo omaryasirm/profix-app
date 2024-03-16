@@ -11,14 +11,14 @@ export const createInvoiceSchema = z.object({
     .object({
       description: z.string().min(1).max(255),
       qty: z.number().min(1),
-      rate: z.number().min(1),
-      amount: z.number().min(1),
+      rate: z.number().min(0),
+      amount: z.number().min(0),
     })
     .array(),
-  subtotal: z.number().min(1),
-  tax: z.number().min(1),
-  discount: z.number().min(1),
-  total: z.number().min(1),
+  subtotal: z.number().min(0),
+  tax: z.number().min(0),
+  discount: z.number().min(0),
+  total: z.number().min(0),
 });
 
 export const createSearchItemSchema = z.object({
