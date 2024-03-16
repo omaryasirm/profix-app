@@ -204,8 +204,8 @@ const NewInvoicePage = () => {
       <Select.Root onValueChange={setPaymentAccount}>
         <Select.Trigger placeholder="Payment Account" className="w-full" />
         <Select.Content position="popper">
-          <Select.Item value="Waqas Ahmed">Waqas Ahmed</Select.Item>
-          <Select.Item value="Chari Bhai">Chari Bhai</Select.Item>
+          <Select.Item value="Waqas">Waqas</Select.Item>
+          <Select.Item value="Shaheryar">Shaheryar</Select.Item>
         </Select.Content>
       </Select.Root>
       {/* <ErrorMessage>{errors.title?.message}</ErrorMessage> */}
