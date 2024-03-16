@@ -113,10 +113,6 @@ const NewInvoicePage = () => {
     if (isNaN(item.rate)) item.rate = 0;
     item.amount = item.qty * item.rate;
 
-    console.log(item.qty);
-    console.log(item.rate);
-    console.log(item.amount);
-
     setSubtotal(getItemsAmount());
   };
 
@@ -145,10 +141,9 @@ const NewInvoicePage = () => {
   };
 
   const removeItem = (index: number) => {
-    // const array = selectedItems.splice(index, 1);
-    console.log(array);
-    // setSelectedItems((prevState) => .filter(item => item.id !== id));
-    console.log(selectedItems);
+    setSelectedItems((oldValues) => {
+      return oldValues.filter((_, i) => i !== index);
+    });
   };
 
   const filteredPeople =
