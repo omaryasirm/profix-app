@@ -75,6 +75,7 @@ const NewInvoicePage = () => {
       var res = await axios.post("/api/invoices", data);
       console.log(res);
       router.push(`/invoices/${res.data.id}/render`);
+      console.log("test");
       // Router.push({
       //   pathname: "/invoices/render",
       //   query: { user_id: this.props.data.member.user.id },
