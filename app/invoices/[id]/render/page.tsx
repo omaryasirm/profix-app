@@ -19,7 +19,7 @@ const RenderInvoicePage = ({ params }: Props) => {
 
   const [isLoading, setIsLoading] = useState(true);
 
-  const [invoice, setInvoice] = useState();
+  const [invoice, setInvoice] = useState<Invoice>();
 
   // const invoice: Invoice;
 

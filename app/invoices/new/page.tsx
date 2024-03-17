@@ -8,7 +8,6 @@ import {
   Table,
   Flex,
   Select,
-  TableCell,
 } from "@radix-ui/themes";
 import { createInvoiceSchema } from "@/app/validationSchemas";
 import { useRouter } from "next/navigation";
@@ -17,8 +16,6 @@ import Spinner from "@/app/components/Spinner";
 import { z } from "zod";
 import { Combobox, Transition } from "@headlessui/react";
 import axios from "axios";
-
-type InvoiceFormData = z.infer<typeof createInvoiceSchema>;
 
 const NewInvoicePage = () => {
   const router = useRouter();
@@ -75,15 +72,6 @@ const NewInvoicePage = () => {
       var res = await axios.post("/api/invoices", data);
       console.log(res);
       router.push(`/invoices/${res.data.id}/render`);
-      console.log("test");
-      // Router.push({
-      //   pathname: "/invoices/render",
-      //   query: { user_id: this.props.data.member.user.id },
-      // });
-      // let string = JSON.stringify({ value: array });
-      // const params = new URLSearchParams(searchParams);
-      // params.set("query", string);
-      // router.refresh();
       setIsSubmitting(false);
     } catch (error) {
       setIsSubmitting(false);
@@ -97,7 +85,7 @@ const NewInvoicePage = () => {
     setSelectedItems((prevState) => [...prevState, Object.assign({}, event)]);
   };
 
-  const addNew = (text) => {
+  const addNew = (text: String) => {
     let value = { description: text };
     setSearchItems((prevState) => [...prevState, Object.assign({}, value)]);
     axios.post("/api/searchItems", value);
