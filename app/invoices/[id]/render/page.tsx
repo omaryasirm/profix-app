@@ -2,17 +2,19 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { Button } from "@radix-ui/themes";
-import ReactToPrint from "react-to-print";
+import ReactToPrint, { useReactToPrint } from "react-to-print";
 import { Invoice } from "@prisma/client";
 import axios from "axios";
 import { Spinner } from "@/app/components";
 import { useRouter } from "next/navigation";
+import Html2Pdf from "js-html2pdf";
 
 interface Props {
   params: { id: string };
+  refId: React.MutableRefObject<HTMLDivElement | undefined>;
 }
 
-const RenderInvoicePage = ({ params }: Props) => {
+const RenderInvoicePage = ({ params, refId }: Props) => {
   const myFontSize = "10px";
   const router = useRouter();
   const ref = useRef<HTMLDivElement>();
@@ -53,6 +55,23 @@ const RenderInvoicePage = ({ params }: Props) => {
     return invoice?.subtotal + getTax() - getDiscount();
   };
 
+  const handleDownload = useReactToPrint({
+    onPrintError: (error) => console.log(error),
+    content: () => ref.current,
+    removeAfterPrint: true,
+    print: async (printIframe) => {
+      const document = printIframe.contentDocument;
+      if (document) {
+        const html = document.getElementById("element-to-download-as-pdf");
+        console.log(html);
+        const exporter = new Html2Pdf(html, {
+          filename: `invoice-${params.id}.pdf`,
+        });
+        exporter.getPdf(true);
+      }
+    },
+  });
+
   const TableRow1 = (props) => {
     return (
       <tr>
@@ -76,29 +95,26 @@ const RenderInvoicePage = ({ params }: Props) => {
     <Spinner />
   ) : (
     <div>
-      <div>
-        <Button
-          type="primary"
-          variant="outline"
-          onClick={onBack}
-          style={{ marginRight: "10px" }}
-        >
-          Back
-        </Button>
-        <ReactToPrint
-          bodyClass="print-agreement"
-          content={() => ref.current}
-          trigger={() => (
-            <Button type="primary" style={{ padding: "10px 20px" }}>
-              🖨️ Print
-            </Button>
-          )}
-        />
-      </div>
-
+      <ReactToPrint
+        bodyClass="print-agreement"
+        content={() => ref.current}
+        trigger={() => (
+          <Button type="primary" style={{ padding: "10px 20px" }}>
+            🖨️ Print
+          </Button>
+        )}
+      />
+      <Button
+        style={{ marginLeft: "7px" }}
+        color="green"
+        onClick={handleDownload}
+      >
+        Share
+      </Button>
       <div style={{ display: "none" }}>
         <div
           ref={ref}
+          id="element-to-download-as-pdf"
           style={{
             width: "200mm",
             height: "275mm",

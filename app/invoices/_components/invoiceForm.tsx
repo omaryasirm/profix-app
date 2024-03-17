@@ -115,7 +115,7 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
         ? await axios.patch(`/api/invoices/${params.id}`, data)
         : await axios.post("/api/invoices", data);
       console.log(res);
-      router.push(`/invoices/${res.data.id}/render`);
+      router.push(`/invoices/${res.data.id}`);
       setIsSubmitting(false);
     } catch (error) {
       setIsSubmitting(false);

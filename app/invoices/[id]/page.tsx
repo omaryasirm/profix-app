@@ -2,10 +2,12 @@
 
 import { Spinner } from "@/app/components";
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Badge, Button, Flex, Link, Table, Text } from "@radix-ui/themes";
 import { Prisma } from "@prisma/client";
 import { useRouter } from "next/navigation";
+import ReactToPrint from "react-to-print";
+import RenderInvoicePage from "./render/page";
 
 const InvoiceDetailPage = ({ params }: { params: { id: string } }) => {
   const invoiceWithItems = Prisma.validator<Prisma.InvoiceDefaultArgs>()({
@@ -16,6 +18,8 @@ const InvoiceDetailPage = ({ params }: { params: { id: string } }) => {
   const [invoice, setInvoice] = useState<invoiceWithItems>();
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+
+  const ref = useRef<HTMLDivElement>();
 
   useEffect(() => {
     if (invoice == null) {
@@ -64,11 +68,26 @@ const InvoiceDetailPage = ({ params }: { params: { id: string } }) => {
     <Spinner />
   ) : (
     <div className="max-w-xl">
-      <div className="mb-3">
-        <Button onClick={() => router.push(`/invoices/${params.id}/edit`)}>
+      <Flex className="mb-3">
+        <Button
+          type="primary"
+          variant="outline"
+          style={{ marginRight: "7px" }}
+          onClick={() => router.push(`/invoices/${params.id}/edit`)}
+        >
           Edit Invoice
         </Button>
-      </div>
+        {/* <ReactToPrint
+          bodyClass="print-agreement"
+          content={() => ref.current}
+          trigger={() => (
+            <Button type="primary" style={{ padding: "10px 20px" }}>
+              🖨️ Print
+            </Button>
+          )}
+        /> */}
+        <RenderInvoicePage params={params} refId={ref} />
+      </Flex>
       <Table.Root variant="surface">
         <Table.Body>
           <TableRowCustom
