@@ -24,6 +24,7 @@ CREATE TABLE "Item" (
     "qty" INTEGER NOT NULL,
     "rate" INTEGER NOT NULL,
     "amount" INTEGER NOT NULL,
+    "invoiceId" INTEGER,
 
     CONSTRAINT "Item_pkey" PRIMARY KEY ("id")
 );
@@ -36,20 +37,5 @@ CREATE TABLE "searchItems" (
     CONSTRAINT "searchItems_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "_InvoiceToItem" (
-    "A" INTEGER NOT NULL,
-    "B" INTEGER NOT NULL
-);
-
--- CreateIndex
-CREATE UNIQUE INDEX "_InvoiceToItem_AB_unique" ON "_InvoiceToItem"("A", "B");
-
--- CreateIndex
-CREATE INDEX "_InvoiceToItem_B_index" ON "_InvoiceToItem"("B");
-
 -- AddForeignKey
-ALTER TABLE "_InvoiceToItem" ADD CONSTRAINT "_InvoiceToItem_A_fkey" FOREIGN KEY ("A") REFERENCES "Invoice"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "_InvoiceToItem" ADD CONSTRAINT "_InvoiceToItem_B_fkey" FOREIGN KEY ("B") REFERENCES "Item"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Item" ADD CONSTRAINT "Item_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE SET NULL ON UPDATE CASCADE;

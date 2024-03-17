@@ -1,7 +1,7 @@
 import React from "react";
+import InvoiceForm from "../../_components/invoiceForm";
 
-const InvoiceEditPage = () => {
-  return <div>InvoiceEditPage</div>;
+const InvoiceEditPage = ({ params }: { params?: { id: string } }) => {
+  return <InvoiceForm params={params} />;
 };
-
 export default InvoiceEditPage;

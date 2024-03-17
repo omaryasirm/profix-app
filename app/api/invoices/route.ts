@@ -26,6 +26,9 @@ export async function POST(request: NextRequest) {
       total: body.total,
       items: { create: body.items },
     },
+    include: {
+      items: true,
+    },
   });
 
   return NextResponse.json(newInvoice, { status: 201 });
