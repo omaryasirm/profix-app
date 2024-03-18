@@ -18,8 +18,11 @@ const InvoiceDetailPage = ({ params }: { params: { id: string } }) => {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  const initialized = useRef(false);
+
   useEffect(() => {
-    if (invoice == null) {
+    if (!initialized.current) {
+      initialized.current = true;
       getInvoice();
     }
   }, []);
@@ -32,7 +35,7 @@ const InvoiceDetailPage = ({ params }: { params: { id: string } }) => {
   };
   const myFontSize = "12px";
 
-  const TableRow1 = (props) => {
+  const TableRow1 = (props: { name: string; value: any }) => {
     return (
       <tr>
         <td
@@ -67,7 +70,6 @@ const InvoiceDetailPage = ({ params }: { params: { id: string } }) => {
     <div className="max-w-xl">
       <Flex className="mb-3">
         <Button
-          type="primary"
           variant="outline"
           style={{ marginRight: "7px" }}
           onClick={() => router.push(`/invoices/${params.id}/edit`)}

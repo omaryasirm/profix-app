@@ -16,7 +16,7 @@ import Spinner from "@/app/components/Spinner";
 import { z } from "zod";
 import { Combobox, Transition } from "@headlessui/react";
 import axios from "axios";
-import { Item, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 type InvoiceFormData = z.infer<typeof createInvoiceSchema>;
 
@@ -36,11 +36,20 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
   const [tax, setTax] = useState(0);
   const [discount, setDiscount] = useState(0);
 
-  interface searchItem {
-    description: string;
+  // interface searchItem {
+  //   description: string;
+  // }
+
+  interface Item {
+    id?: number;
+    description?: string;
+    qty?: number | undefined;
+    rate?: number | undefined;
+    amount?: number | undefined;
+    invoiceId?: number;
   }
 
-  const [searchItems, setSearchItems] = useState<searchItem[]>([]);
+  const [searchItems, setSearchItems] = useState<Item[]>([]);
   const [selectedItems, setSelectedItems] = useState<Item[]>([]);
   const [query, setQuery] = useState("");
 
@@ -57,7 +66,7 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
       initialized.current = true;
       getInvoice();
     }
-  }, []);
+  });
 
   const getInvoice = async () => {
     if (params != null) {
@@ -67,14 +76,23 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
       setInvoice(res.data);
       console.log(res.data);
 
-      res.data.items.forEach((item: Item) => {
-        delete item.id;
-        delete item.invoiceId;
-        setSelectedItems((prevState) => [
-          ...prevState,
-          Object.assign({}, item),
-        ]);
-      });
+      res.data.items.forEach(
+        (item: {
+          id?: number;
+          description: string;
+          qty: number;
+          rate: number;
+          amount: number;
+          invoiceId?: number;
+        }) => {
+          delete item.id;
+          delete item.invoiceId;
+          setSelectedItems((prevState) => [
+            ...prevState,
+            Object.assign({}, item),
+          ]);
+        }
+      );
 
       setName(res.data.name);
       setAddress(res.data.address);
@@ -92,11 +110,11 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
   const getSearchItems = async () => {
     let res = await axios.get("/api/searchItems");
     setSearchItems(res.data);
-    console.log(res.data);
+    // console.log(res.data);
     setIsLoading(false);
   };
 
-  const onSubmitInvoice = async (_) => {
+  const onSubmitInvoice = async (_: any) => {
     let data = {
       name: name,
       address: address,
@@ -132,8 +150,8 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
     setSelectedItems((prevState) => [...prevState, Object.assign({}, event)]);
   };
 
-  const addNew = (text: String) => {
-    let value = { description: text };
+  const addNew = (text: string) => {
+    let value: Item = { description: text };
     setSearchItems((prevState) => [...prevState, Object.assign({}, value)]);
     axios.post("/api/searchItems", value);
 
@@ -152,9 +170,9 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
   };
 
   const calcAmount = (item: Item) => {
-    if (isNaN(item.qty)) item.qty = 0;
-    if (isNaN(item.rate)) item.rate = 0;
-    item.amount = item.qty * item.rate;
+    if (isNaN(item.qty!)) item.qty = 0;
+    if (isNaN(item.rate!)) item.rate = 0;
+    item.amount = item.qty! * item.rate!;
 
     setSubtotal(getItemsAmount());
   };
@@ -176,8 +194,8 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
   const getItemsAmount = () => {
     let temp = 0;
     selectedItems.forEach((value) => {
-      if (isNaN(value.amount)) value.amount = 0;
-      temp += value.amount;
+      if (isNaN(value.amount!)) value.amount = 0;
+      temp += value.amount!;
     });
 
     return temp;
@@ -193,8 +211,8 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
     query === ""
       ? searchItems
       : searchItems.filter((item) =>
-          item.description
-            .toLowerCase()
+          item
+            .description!.toLowerCase()
             .replace(/\s+/g, "")
             .includes(query.toLowerCase().replace(/\s+/g, ""))
         );
