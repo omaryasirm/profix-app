@@ -8,6 +8,7 @@ import {
   Table,
   Flex,
   Select,
+  Heading,
 } from "@radix-ui/themes";
 import { createInvoiceSchema } from "@/app/validationSchemas";
 import { useRouter } from "next/navigation";
@@ -17,6 +18,7 @@ import { z } from "zod";
 import { Combobox, Transition } from "@headlessui/react";
 import axios from "axios";
 import { Prisma } from "@prisma/client";
+import { TiDelete } from "react-icons/ti";
 
 type InvoiceFormData = z.infer<typeof createInvoiceSchema>;
 
@@ -35,10 +37,6 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
   const [subtotal, setSubtotal] = useState(0);
   const [tax, setTax] = useState(0);
   const [discount, setDiscount] = useState(0);
-
-  // interface searchItem {
-  //   description: string;
-  // }
 
   interface Item {
     id?: number;
@@ -218,14 +216,19 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
         );
 
   return isLoading ? (
-    <Spinner />
+    // <Flex
+    //   justify={"center"}
+    //   align={"center"}
+    //   style={{ height: "calc(100% - 150px)" }}
+    // >
+    //   <Spinner />
+    // </Flex>
+    <Spinner fullPage={true} />
   ) : (
-    <div className="max-w-xl space-y-3 mt-3">
-      <p className="font-medium text-lg">
-        {params ? "Edit Invoice" : "Create Invoice"}
-      </p>
+    <div className="max-w-xl space-y-3">
+      <Heading>{params ? "Edit Invoice" : "Create Invoice"}</Heading>
       {/* <form className="space-y-3" onSubmit={onSubmit}> */}
-      <TextField.Root>
+      <TextField.Root style={{ marginTop: "20px" }}>
         <TextField.Input
           defaultValue={params ? invoice?.name : undefined}
           placeholder="Name"
@@ -404,9 +407,7 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
                     Rs.{item.amount == null ? "0" : item.amount}
                     <div style={{ textAlign: "right", width: "100%" }}>
                       <button onClick={() => removeItem(index)}>
-                        <span className="material-symbols-outlined">
-                          delete
-                        </span>
+                        <TiDelete size={"1.5rem"} />
                       </button>
                     </div>
                   </Flex>
@@ -481,7 +482,6 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
         {params ? "Update Invoice" : "Create Invoice"}
         {isSubmitting && <Spinner />}
       </Button>
-      {/* </form> */}
     </div>
   );
 };

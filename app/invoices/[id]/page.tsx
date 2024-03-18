@@ -3,7 +3,7 @@
 import { Spinner } from "@/app/components";
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
-import { Badge, Button, Flex, Link, Table, Text } from "@radix-ui/themes";
+import { Badge, Button, Flex, Table } from "@radix-ui/themes";
 import { Prisma } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import RenderInvoicePage from "./render/page";
@@ -33,27 +33,6 @@ const InvoiceDetailPage = ({ params }: { params: { id: string } }) => {
     console.log(res.data);
     setIsLoading(false);
   };
-  const myFontSize = "12px";
-
-  const TableRow1 = (props: { name: string; value: any }) => {
-    return (
-      <tr>
-        <td
-          className="px-1 text-left font-bold border border-gray-300"
-          style={{ fontSize: myFontSize, width: "100px" }}
-        >
-          {props.name}
-        </td>
-        <td
-          className="py-0.5 px-2 text-left border-b border border-gray-300"
-          style={{ fontSize: myFontSize }}
-        >
-          {" "}
-          {props.value}
-        </td>
-      </tr>
-    );
-  };
 
   const TableRowCustom = (props: { name: string; value: any }) => {
     return (
@@ -65,7 +44,7 @@ const InvoiceDetailPage = ({ params }: { params: { id: string } }) => {
   };
 
   return isLoading ? (
-    <Spinner />
+    <Spinner fullPage={true} />
   ) : (
     <div className="max-w-xl">
       <Flex className="mb-3">
@@ -76,15 +55,6 @@ const InvoiceDetailPage = ({ params }: { params: { id: string } }) => {
         >
           Edit Invoice
         </Button>
-        {/* <ReactToPrint
-          bodyClass="print-agreement"
-          content={() => ref.current}
-          trigger={() => (
-            <Button type="primary" style={{ padding: "10px 20px" }}>
-              🖨️ Print
-            </Button>
-          )}
-        /> */}
         <RenderInvoicePage params={params} />
       </Flex>
       <Table.Root variant="surface">
