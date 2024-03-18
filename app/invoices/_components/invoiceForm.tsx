@@ -31,12 +31,16 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
   const [contact, setContact] = useState("");
   const [vehicle, setVehicle] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
-  const [paymentAccount, setPaymentAccount] = useState("");
+  const [paymentAccount, setPaymentAccount] = useState<string | null>("");
   const [subtotal, setSubtotal] = useState(0);
   const [tax, setTax] = useState(0);
   const [discount, setDiscount] = useState(0);
 
-  const [searchItems, setSearchItems] = useState([]);
+  interface searchItem {
+    description: string;
+  }
+
+  const [searchItems, setSearchItems] = useState<searchItem[]>([]);
   const [selectedItems, setSelectedItems] = useState<Item[]>([]);
   const [query, setQuery] = useState("");
 
@@ -63,7 +67,7 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
       setInvoice(res.data);
       console.log(res.data);
 
-      res.data.items.forEach((item) => {
+      res.data.items.forEach((item: Item) => {
         delete item.id;
         delete item.invoiceId;
         setSelectedItems((prevState) => [
@@ -76,8 +80,8 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
       setAddress(res.data.address);
       setContact(res.data.contact);
       setVehicle(res.data.vehicle);
-      setPaymentAccount(res.data.paymentAccount);
       setPaymentMethod(res.data.paymentMethod);
+      setPaymentAccount(res.data.paymentAccount);
       setSubtotal(res.data.subtotal);
       setTax(res.data.tax);
       setDiscount(res.data.discount);
@@ -122,7 +126,7 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
     }
   };
 
-  const handleChange = (event) => {
+  const handleChange = (event: Item) => {
     delete event.id;
     event.qty = 1;
     setSelectedItems((prevState) => [...prevState, Object.assign({}, event)]);
@@ -139,7 +143,15 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
     // console.log(event);
   };
 
-  const calcAmount = (item) => {
+  const onPaymentMethod = (value: string) => {
+    setPaymentMethod(value);
+
+    if (value == "Cash") {
+      setPaymentAccount("");
+    }
+  };
+
+  const calcAmount = (item: Item) => {
     if (isNaN(item.qty)) item.qty = 0;
     if (isNaN(item.rate)) item.rate = 0;
     item.amount = item.qty * item.rate;
@@ -194,38 +206,37 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
       <p className="font-medium text-lg">
         {params ? "Edit Invoice" : "Create Invoice"}
       </p>
-
       {/* <form className="space-y-3" onSubmit={onSubmit}> */}
       <TextField.Root>
         <TextField.Input
-          defaultValue={params ? invoice?.name : null}
+          defaultValue={params ? invoice?.name : undefined}
           placeholder="Name"
           onChange={(e) => setName(e.target.value)}
         />
       </TextField.Root>
       <TextField.Root>
         <TextField.Input
-          defaultValue={params ? invoice?.address : null}
+          defaultValue={params ? invoice?.address : undefined}
           placeholder="Address"
           onChange={(e) => setAddress(e.target.value)}
         />
       </TextField.Root>
       <TextField.Root>
         <TextField.Input
-          defaultValue={params ? invoice?.contact : null}
+          defaultValue={params ? invoice?.contact : undefined}
           placeholder="Mobile"
           onChange={(e) => setContact(e.target.value)}
         />
       </TextField.Root>
       <TextField.Root>
         <TextField.Input
-          defaultValue={params ? invoice?.vehicle : null}
+          defaultValue={params ? invoice?.vehicle : undefined}
           placeholder="Vehicle"
           onChange={(e) => setVehicle(e.target.value)}
         />
       </TextField.Root>
       <Select.Root
-        onValueChange={setPaymentMethod}
+        onValueChange={onPaymentMethod}
         defaultValue={params ? invoice?.paymentMethod : ""}
       >
         <Select.Trigger placeholder="Payment Method" className="w-full" />
@@ -234,18 +245,19 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
           <Select.Item value="Bank Transfer">Bank Transfer</Select.Item>
         </Select.Content>
       </Select.Root>
-      <Select.Root
-        onValueChange={setPaymentAccount}
-        defaultValue={params ? invoice?.paymentAccount : ""}
-      >
-        <Select.Trigger placeholder="Payment Account" className="w-full" />
-        <Select.Content position="popper">
-          <Select.Item value="Waqas">Waqas</Select.Item>
-          <Select.Item value="Shaheryar">Shaheryar</Select.Item>
-        </Select.Content>
-      </Select.Root>
+      {paymentMethod == "Bank Transfer" && (
+        <Select.Root
+          onValueChange={setPaymentAccount}
+          defaultValue={params ? invoice?.paymentAccount ?? undefined : ""}
+        >
+          <Select.Trigger placeholder="Payment Account" className="w-full" />
+          <Select.Content position="popper">
+            <Select.Item value="Waqas">Waqas</Select.Item>
+            <Select.Item value="Shaheryar">Shaheryar</Select.Item>
+          </Select.Content>
+        </Select.Root>
+      )}
       {/* <ErrorMessage>{errors.title?.message}</ErrorMessage> */}
-
       <Combobox
         // defaultValue={"Tag"}
         // value={selected}
@@ -328,7 +340,6 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
           </Transition>
         </div>
       </Combobox>
-
       {selectedItems.length > 0 ? (
         <Table.Root variant="surface">
           <Table.Header>
@@ -363,7 +374,7 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
                     </div>
                     <div className="mr-2">
                       <TextField.Input
-                        defaultValue={params ? item.rate : null}
+                        defaultValue={params ? item.rate : undefined}
                         style={{ width: "100px" }}
                         placeholder="Rate"
                         onChange={(e) => (
@@ -420,7 +431,7 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
         <span>%</span>
         <TextField.Root className="mx-2 w-20">
           <TextField.Input
-            defaultValue={params ? tax : null}
+            defaultValue={params ? tax : undefined}
             placeholder="Tax"
             onChange={(e) => setTax(parseInt(e.target.value))}
           />
@@ -431,14 +442,13 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
         <span>%</span>
         <TextField.Root className="mx-2 w-20">
           <TextField.Input
-            defaultValue={params ? discount : null}
+            defaultValue={params ? discount : undefined}
             placeholder="Discount"
             onChange={(e) => setDiscount(parseInt(e.target.value))}
           />
         </TextField.Root>
         <p>Rs.{calcDiscount()}</p>
       </Flex>
-
       <p className="font-bold">Total: Rs.{calcTotal()}</p>
       {error && (
         <Callout.Root color="red" className="mb-5">

@@ -21,7 +21,7 @@ model Invoice {
   contact        String   @db.Text
   vehicle        String   @db.Text
   paymentMethod  String   @db.Text
-  paymentAccount String   @db.Text
+  paymentAccount String?   @db.Text
   items          Item[]
   subtotal       Int      @db.Integer
   tax            Int      @db.Integer

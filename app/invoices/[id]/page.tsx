@@ -110,10 +110,12 @@ const InvoiceDetailPage = ({ params }: { params: { id: string } }) => {
             name="Payment Method"
             value={invoice?.paymentMethod ?? ""}
           />
-          <TableRowCustom
-            name="Payment Account"
-            value={invoice?.paymentAccount ?? ""}
-          />
+          {invoice?.paymentAccount && (
+            <TableRowCustom
+              name="Payment Account"
+              value={invoice?.paymentAccount ?? ""}
+            />
+          )}
         </Table.Body>
       </Table.Root>
 
