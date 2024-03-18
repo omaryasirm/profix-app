@@ -24,7 +24,7 @@ CREATE TABLE "Item" (
     "qty" INTEGER NOT NULL,
     "rate" INTEGER NOT NULL,
     "amount" INTEGER NOT NULL,
-    "invoiceId" INTEGER,
+    "invoiceId" INTEGER NOT NULL,
 
     CONSTRAINT "Item_pkey" PRIMARY KEY ("id")
 );
@@ -38,4 +38,4 @@ CREATE TABLE "searchItems" (
 );
 
 -- AddForeignKey
-ALTER TABLE "Item" ADD CONSTRAINT "Item_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Item" ADD CONSTRAINT "Item_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
