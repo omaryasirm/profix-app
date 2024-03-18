@@ -11,10 +11,9 @@ import Html2Pdf from "js-html2pdf";
 
 interface Props {
   params: { id: string };
-  refId: React.MutableRefObject<HTMLDivElement | undefined>;
 }
 
-const RenderInvoicePage = ({ params, refId }: Props) => {
+const RenderInvoicePage = ({ params }: Props) => {
   const myFontSize = "10px";
   const router = useRouter();
   const ref = useRef<HTMLDivElement>();

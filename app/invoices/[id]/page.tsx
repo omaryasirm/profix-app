@@ -6,7 +6,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { Badge, Button, Flex, Link, Table, Text } from "@radix-ui/themes";
 import { Prisma } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import ReactToPrint from "react-to-print";
 import RenderInvoicePage from "./render/page";
 
 const InvoiceDetailPage = ({ params }: { params: { id: string } }) => {
@@ -18,8 +17,6 @@ const InvoiceDetailPage = ({ params }: { params: { id: string } }) => {
   const [invoice, setInvoice] = useState<invoiceWithItems>();
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-
-  const ref = useRef<HTMLDivElement>();
 
   useEffect(() => {
     if (invoice == null) {
@@ -86,7 +83,7 @@ const InvoiceDetailPage = ({ params }: { params: { id: string } }) => {
             </Button>
           )}
         /> */}
-        <RenderInvoicePage params={params} refId={ref} />
+        <RenderInvoicePage params={params} />
       </Flex>
       <Table.Root variant="surface">
         <Table.Body>
