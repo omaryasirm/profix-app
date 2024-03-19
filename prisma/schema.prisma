@@ -15,20 +15,37 @@ datasource db {
 }
 
 model Invoice {
-  id             Int      @id @default(autoincrement())
-  name           String   @db.Text
-  address        String   @db.Text
-  contact        String   @db.Text
-  vehicle        String   @db.Text
-  paymentMethod  String   @db.Text
-  paymentAccount String?   @db.Text
+  id             Int         @id @default(autoincrement())
+  type           InvoiceType @default(INVOICE)
+  name           String      @db.Text
+  contact        String?     @db.Text
+  registrationNo String?     @db.Text
+  vehicle        String?     @db.Text
+  paymentMethod  String?     @db.Text
+  paymentAccount String?     @db.Text
   items          Item[]
-  subtotal       Int      @db.Integer
-  tax            Int      @db.Integer
-  discount       Int      @db.Integer
-  total          Int      @db.Integer
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  subtotal       Int         @db.Integer
+  tax            Int         @db.Integer
+  discount       Int         @db.Integer
+  total          Int         @db.Integer
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  customer       Customer    @relation(fields: [customerId], references: [id])
+  customerId     Int
+}
+
+enum InvoiceType {
+  INVOICE
+  ESTIMATE
+}
+
+model Customer {
+  id             Int       @id @default(autoincrement())
+  name           String    @db.Text
+  contact        String?   @db.Text
+  registrationNo String?   @db.Text
+  vehicle        String?   @db.Text
+  invoices       Invoice[]
 }
 
 model Item {
@@ -38,7 +55,7 @@ model Item {
   rate        Int     @db.Integer
   amount      Int     @db.Integer
   Invoice     Invoice @relation(fields: [invoiceId], references: [id])
-  invoiceId   Int     
+  invoiceId   Int
 }
 
 model searchItems {

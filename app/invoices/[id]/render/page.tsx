@@ -7,7 +7,9 @@ import { Invoice } from "@prisma/client";
 import axios from "axios";
 import { Spinner } from "@/app/components";
 import { useRouter } from "next/navigation";
-import Html2Pdf from "js-html2pdf";
+// import Html2Pdf from "js-html2pdf";
+import { AiOutlinePrinter } from "react-icons/ai";
+import { MdOutlineFileDownload } from "react-icons/md";
 
 interface Props {
   params: { id: string };
@@ -54,22 +56,22 @@ const RenderInvoicePage = ({ params }: Props) => {
     return invoice?.subtotal + getTax() - getDiscount();
   };
 
-  const handleDownload = useReactToPrint({
-    onPrintError: (error) => console.log(error),
-    content: () => ref.current,
-    removeAfterPrint: true,
-    print: async (printIframe) => {
-      const document = printIframe.contentDocument;
-      if (document) {
-        const html = document.getElementById("element-to-download-as-pdf");
-        console.log(html);
-        const exporter = new Html2Pdf(html, {
-          filename: `invoice-${params.id}.pdf`,
-        });
-        exporter.getPdf(true);
-      }
-    },
-  });
+  // const handleDownload = useReactToPrint({
+  //   onPrintError: (error) => console.log(error),
+  //   content: () => ref.current,
+  //   removeAfterPrint: true,
+  //   print: async (printIframe) => {
+  //     const document = printIframe.contentDocument;
+  //     if (document) {
+  //       const html = document.getElementById("element-to-download-as-pdf");
+  //       console.log(html);
+  //       const exporter = new Html2Pdf(html, {
+  //         filename: `invoice-${params.id}.pdf`,
+  //       });
+  //       exporter.getPdf(true);
+  //     }
+  //   },
+  // });
 
   const TableRow1 = (props) => {
     return (
@@ -99,16 +101,18 @@ const RenderInvoicePage = ({ params }: Props) => {
         content={() => ref.current}
         trigger={() => (
           <Button type="primary" style={{ padding: "10px 20px" }}>
-            🖨️ Print
+            <AiOutlinePrinter size={"1.2rem"} />
+            Print
           </Button>
         )}
       />
       <Button
         style={{ marginLeft: "7px" }}
         color="green"
-        onClick={handleDownload}
+        // onClick={handleDownload}
       >
-        Share
+        <MdOutlineFileDownload size={"1.2rem"} />
+        Download
       </Button>
       <div style={{ display: "none" }}>
         <div

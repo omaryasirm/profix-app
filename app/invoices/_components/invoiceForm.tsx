@@ -20,8 +20,6 @@ import axios from "axios";
 import { Prisma } from "@prisma/client";
 import { TiDelete } from "react-icons/ti";
 
-type InvoiceFormData = z.infer<typeof createInvoiceSchema>;
-
 const InvoiceForm = ({ params }: { params?: { id: string } }) => {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -29,10 +27,10 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const [name, setName] = useState("");
-  const [address, setAddress] = useState("");
-  const [contact, setContact] = useState("");
-  const [vehicle, setVehicle] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("");
+  const [registrationNo, setRegistrationNo] = useState<string | null>("");
+  const [contact, setContact] = useState<string | null>("");
+  const [vehicle, setVehicle] = useState<string | null>("");
+  const [paymentMethod, setPaymentMethod] = useState<string | null>("");
   const [paymentAccount, setPaymentAccount] = useState<string | null>("");
   const [subtotal, setSubtotal] = useState(0);
   const [tax, setTax] = useState(0);
@@ -45,6 +43,14 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
     rate?: number | undefined;
     amount?: number | undefined;
     invoiceId?: number;
+  }
+
+  interface Customer {
+    id?: number;
+    name?: string;
+    contact?: string;
+    registrationNo?: string;
+    vehicle?: string;
   }
 
   const [searchItems, setSearchItems] = useState<Item[]>([]);
@@ -93,7 +99,7 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
       );
 
       setName(res.data.name);
-      setAddress(res.data.address);
+      setRegistrationNo(res.data.registrationNo);
       setContact(res.data.contact);
       setVehicle(res.data.vehicle);
       setPaymentMethod(res.data.paymentMethod);
@@ -113,27 +119,42 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
   };
 
   const onSubmitInvoice = async (_: any) => {
-    let data = {
-      name: name,
-      address: address,
-      contact: contact,
-      vehicle: vehicle,
-      paymentMethod: paymentMethod,
-      paymentAccount: paymentAccount,
-      items: selectedItems,
-      subtotal: subtotal,
-      tax: tax,
-      discount: discount,
-      total: calcTotal(),
-    };
-
-    console.log(data);
-
     try {
       setIsSubmitting(true);
+
+      let customerData = {
+        name: name,
+        contact: contact,
+        registrationNo: registrationNo,
+        vehicle: vehicle,
+      };
+
+      let newCustomer: { data: Customer };
+
+      if (!params) {
+        newCustomer = await axios.post("/api/customers", customerData);
+      }
+
+      let invoiceData = {
+        customerId: !params ? newCustomer!.data.id : invoice?.customerId!,
+        name: name,
+        contact: contact,
+        registrationNo: registrationNo,
+        vehicle: vehicle,
+        paymentMethod: paymentMethod,
+        paymentAccount: paymentAccount,
+        items: selectedItems,
+        subtotal: subtotal,
+        tax: tax,
+        discount: discount,
+        total: calcTotal(),
+      };
+
+      console.log(invoiceData);
+
       var res = params
-        ? await axios.patch(`/api/invoices/${params.id}`, data)
-        : await axios.post("/api/invoices", data);
+        ? await axios.patch(`/api/invoices/${params.id}`, invoiceData)
+        : await axios.post("/api/invoices", invoiceData);
       console.log(res);
       router.push(`/invoices/${res.data.id}`);
     } catch (error) {
@@ -189,9 +210,9 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
     return Math.round(subtotal + calcTax() - calcDiscount());
   };
 
-  const getItemsAmount = () => {
+  const getItemsAmount = (localSelectedItems?: Item[]) => {
     let temp = 0;
-    selectedItems.forEach((value) => {
+    (localSelectedItems ?? selectedItems).forEach((value) => {
       if (isNaN(value.amount!)) value.amount = 0;
       temp += value.amount!;
     });
@@ -201,8 +222,14 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
 
   const removeItem = (index: number) => {
     setSelectedItems((oldValues) => {
-      return oldValues.filter((_, i) => i !== index);
+      const value = oldValues.filter((_, i) => i !== index);
+      setSubtotal(getItemsAmount(value));
+      return value;
     });
+  };
+
+  const testValue = () => {
+    // return console.log("selectedItems", selectedItems);
   };
 
   const filteredPeople =
@@ -237,23 +264,24 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
       </TextField.Root>
       <TextField.Root>
         <TextField.Input
-          defaultValue={params ? invoice?.address : undefined}
-          placeholder="Address"
-          onChange={(e) => setAddress(e.target.value)}
-        />
-      </TextField.Root>
-      <TextField.Root>
-        <TextField.Input
           defaultValue={params ? invoice?.contact : undefined}
           placeholder="Mobile"
           onChange={(e) => setContact(e.target.value)}
         />
       </TextField.Root>
+
       <TextField.Root>
         <TextField.Input
           defaultValue={params ? invoice?.vehicle : undefined}
           placeholder="Vehicle"
           onChange={(e) => setVehicle(e.target.value)}
+        />
+      </TextField.Root>
+      <TextField.Root>
+        <TextField.Input
+          defaultValue={params ? invoice?.registrationNo : undefined}
+          placeholder="Registration No"
+          onChange={(e) => setRegistrationNo(e.target.value)}
         />
       </TextField.Root>
       <Select.Root

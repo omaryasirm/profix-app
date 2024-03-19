@@ -14,10 +14,11 @@ export async function POST(request: NextRequest) {
 
   const newInvoice = await prisma.invoice.create({
     data: {
+      customerId: body.customerId,
       name: body.name,
-      address: body.address,
       contact: body.contact,
       vehicle: body.vehicle,
+      registrationNo: body.registrationNo,
       paymentMethod: body.paymentMethod,
       paymentAccount: body.paymentAccount,
       subtotal: body.subtotal,

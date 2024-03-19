@@ -3,10 +3,11 @@
 import { Spinner } from "@/app/components";
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
-import { Badge, Button, Flex, Table } from "@radix-ui/themes";
+import { Badge, Button, Flex, IconButton, Link, Table } from "@radix-ui/themes";
 import { Prisma } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import RenderInvoicePage from "./render/page";
+import { FaWhatsappSquare } from "react-icons/fa";
 
 const InvoiceDetailPage = ({ params }: { params: { id: string } }) => {
   const invoiceWithItems = Prisma.validator<Prisma.InvoiceDefaultArgs>()({
@@ -38,15 +39,32 @@ const InvoiceDetailPage = ({ params }: { params: { id: string } }) => {
     return (
       <Table.Row>
         <Table.Cell className="font-bold w-40">{props.name}</Table.Cell>
-        <Table.Cell>{props.value}</Table.Cell>
+        <Table.Cell className="flex">
+          {props.name == "Contact" ? (
+            <>
+              <Link href="https://wa.me/03341724932"> {props.value}</Link>
+              <button className="ml-2 flex items-center">
+                <Link href="https://wa.me/03341724932">
+                  <FaWhatsappSquare size={"1.8rem"} color="green" />
+                </Link>
+              </button>
+            </>
+          ) : (
+            props.value
+          )}
+        </Table.Cell>
       </Table.Row>
     );
   };
+  // <Button>
+  //   <Link href="/invoices/new">Create Invoice</Link>
+  // </Button>;
+  // https://wa.me/03341724932
 
   return isLoading ? (
     <Spinner fullPage={true} />
   ) : (
-    <div className="max-w-xl">
+    <div className="max-w-xl pb-10">
       <Flex className="mb-3">
         <Button
           variant="outline"
@@ -75,9 +93,13 @@ const InvoiceDetailPage = ({ params }: { params: { id: string } }) => {
             }
           />
           <TableRowCustom name="Name" value={invoice!.name} />
-          <TableRowCustom name="Address" value={invoice!.address} />
           <TableRowCustom name="Contact" value={invoice!.contact} />
           <TableRowCustom name="Vehicle" value={invoice!.vehicle} />
+
+          <TableRowCustom
+            name="Registration No"
+            value={invoice!.registrationNo}
+          />
           <TableRowCustom
             name="Payment Method"
             value={invoice?.paymentMethod ?? ""}
