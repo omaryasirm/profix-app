@@ -9,23 +9,29 @@ import {
   Flex,
   Select,
   Heading,
+  RadioGroup,
+  Text,
 } from "@radix-ui/themes";
-import { createInvoiceSchema } from "@/app/validationSchemas";
 import { useRouter } from "next/navigation";
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import Spinner from "@/app/components/Spinner";
-import { z } from "zod";
-import { Combobox, Transition } from "@headlessui/react";
 import axios from "axios";
 import { Prisma } from "@prisma/client";
 import { TiDelete } from "react-icons/ti";
+import MyCombobox from "./MyCombobox";
+import { Transition } from "@headlessui/react";
 
-const InvoiceForm = ({ params }: { params?: { id: string } }) => {
+const InvoiceForm = ({
+  params,
+  isInvoice,
+}: {
+  params?: { id: string };
+  isInvoice: boolean;
+}) => {
   const router = useRouter();
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-
   const [name, setName] = useState("");
   const [registrationNo, setRegistrationNo] = useState<string | null>("");
   const [contact, setContact] = useState<string | null>("");
@@ -47,7 +53,7 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
 
   interface Customer {
     id?: number;
-    name?: string;
+    name: string;
     contact?: string;
     registrationNo?: string;
     vehicle?: string;
@@ -55,7 +61,8 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
 
   const [searchItems, setSearchItems] = useState<Item[]>([]);
   const [selectedItems, setSelectedItems] = useState<Item[]>([]);
-  const [query, setQuery] = useState("");
+
+  const [searchCustomer, setSearchCustomer] = useState<Customer[]>([]);
 
   const invoiceWithItems = Prisma.validator<Prisma.InvoiceDefaultArgs>()({
     include: { items: true },
@@ -114,7 +121,18 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
   const getSearchItems = async () => {
     let res = await axios.get("/api/searchItems");
     setSearchItems(res.data);
+
+    await getCustomers();
     // console.log(res.data);
+    setIsLoading(false);
+  };
+
+  const getCustomers = async () => {
+    let res = await axios.get("/api/customers");
+    console.log(res.data);
+
+    setSearchCustomer(res.data);
+
     setIsLoading(false);
   };
 
@@ -129,14 +147,15 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
         vehicle: vehicle,
       };
 
-      let newCustomer: { data: Customer };
-
-      if (!params) {
-        newCustomer = await axios.post("/api/customers", customerData);
-      }
+      let customer: { data: Customer } = params
+        ? await axios.patch(
+            `/api/customers/${invoice?.customerId!}`,
+            customerData
+          )
+        : await axios.post("/api/customers", customerData);
 
       let invoiceData = {
-        customerId: !params ? newCustomer!.data.id : invoice?.customerId!,
+        customerId: !params ? customer!.data.id : invoice?.customerId!,
         name: name,
         contact: contact,
         registrationNo: registrationNo,
@@ -153,20 +172,46 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
       console.log(invoiceData);
 
       var res = params
-        ? await axios.patch(`/api/invoices/${params.id}`, invoiceData)
-        : await axios.post("/api/invoices", invoiceData);
+        ? await axios.patch(
+            isInvoice
+              ? `/api/invoices/${params.id}`
+              : `/api/estimates/${params.id}`,
+            invoiceData
+          )
+        : await axios.post(
+            isInvoice ? "/api/invoices" : "/api/estimates",
+            invoiceData
+          );
       console.log(res);
-      router.push(`/invoices/${res.data.id}`);
+      router.push(
+        isInvoice ? `/invoices/${res.data.id}` : `/estimates/${res.data.id}`
+      );
     } catch (error) {
       setIsSubmitting(false);
       setError("An unexpected erorr occurred.");
     }
   };
 
-  const handleChange = (event: Item) => {
+  const handleChange = (event: any) => {
     delete event.id;
     event.qty = 1;
     setSelectedItems((prevState) => [...prevState, Object.assign({}, event)]);
+  };
+
+  const handleCustomerChange = (customer: Customer) => {
+    setName(customer.name);
+    customer.contact && setContact(customer.contact);
+    customer.vehicle && setVehicle(customer.vehicle);
+    customer.registrationNo && setRegistrationNo(customer.registrationNo);
+
+    // set invoice for edit
+    let invoiceTemp = Object.assign({}, invoice);
+    invoiceTemp.name = customer.name;
+    invoiceTemp.contact = customer.contact ?? null;
+    invoiceTemp.vehicle = customer.vehicle ?? null;
+    invoiceTemp.registrationNo = customer.registrationNo ?? null;
+    setInvoice(invoiceTemp);
+    console.log(invoiceTemp);
   };
 
   const addNew = (text: string) => {
@@ -228,167 +273,121 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
     });
   };
 
-  const testValue = () => {
-    // return console.log("selectedItems", selectedItems);
-  };
-
-  const filteredPeople =
-    query === ""
-      ? searchItems
-      : searchItems.filter((item) =>
-          item
-            .description!.toLowerCase()
-            .replace(/\s+/g, "")
-            .includes(query.toLowerCase().replace(/\s+/g, ""))
-        );
-
   return isLoading ? (
-    // <Flex
-    //   justify={"center"}
-    //   align={"center"}
-    //   style={{ height: "calc(100% - 150px)" }}
-    // >
-    //   <Spinner />
-    // </Flex>
     <Spinner fullPage={true} />
   ) : (
-    <div className="max-w-xl space-y-3">
-      <Heading>{params ? "Edit Invoice" : "Create Invoice"}</Heading>
-      {/* <form className="space-y-3" onSubmit={onSubmit}> */}
-      <TextField.Root style={{ marginTop: "20px" }}>
+    <div className="max-w-xl space-y-3" id="customer-combo">
+      <Heading>
+        {params
+          ? isInvoice
+            ? "Edit Invoice"
+            : "Edit Estimate"
+          : isInvoice
+          ? "Create Invoice"
+          : "Create Estimate"}
+      </Heading>
+      <MyCombobox
+        style={{ marginTop: "20px" }}
+        handleChange={handleCustomerChange}
+        searchItems={searchCustomer}
+        searchItemValue={"name"}
+        placeholder="Search customer"
+      />
+      {/* name */}
+      <TextField.Root>
         <TextField.Input
-          defaultValue={params ? invoice?.name : undefined}
+          value={name}
           placeholder="Name"
           onChange={(e) => setName(e.target.value)}
         />
       </TextField.Root>
+      {/* contact */}
       <TextField.Root>
         <TextField.Input
-          defaultValue={params ? invoice?.contact : undefined}
+          value={contact ?? undefined}
           placeholder="Mobile"
           onChange={(e) => setContact(e.target.value)}
         />
       </TextField.Root>
-
+      {/* Vehicle */}
       <TextField.Root>
         <TextField.Input
-          defaultValue={params ? invoice?.vehicle : undefined}
+          value={vehicle ?? undefined}
           placeholder="Vehicle"
           onChange={(e) => setVehicle(e.target.value)}
         />
       </TextField.Root>
+      {/* Registration */}
       <TextField.Root>
         <TextField.Input
-          defaultValue={params ? invoice?.registrationNo : undefined}
+          value={registrationNo ?? undefined}
           placeholder="Registration No"
           onChange={(e) => setRegistrationNo(e.target.value)}
         />
       </TextField.Root>
-      <Select.Root
-        onValueChange={onPaymentMethod}
-        defaultValue={params ? invoice?.paymentMethod : ""}
-      >
-        <Select.Trigger placeholder="Payment Method" className="w-full" />
-        <Select.Content position="popper">
-          <Select.Item value="Cash">Cash</Select.Item>
-          <Select.Item value="Bank Transfer">Bank Transfer</Select.Item>
-        </Select.Content>
-      </Select.Root>
-      {paymentMethod == "Bank Transfer" && (
-        <Select.Root
-          onValueChange={setPaymentAccount}
-          defaultValue={params ? invoice?.paymentAccount ?? undefined : ""}
+      {isInvoice && (
+        <div
+          id="item-combo"
+          className="space-y-3"
+          style={{ margin: "15px 2px" }}
         >
-          <Select.Trigger placeholder="Payment Account" className="w-full" />
-          <Select.Content position="popper">
-            <Select.Item value="Waqas">Waqas</Select.Item>
-            <Select.Item value="Shaheryar">Shaheryar</Select.Item>
-          </Select.Content>
-        </Select.Root>
-      )}
-      {/* <ErrorMessage>{errors.title?.message}</ErrorMessage> */}
-      <Combobox
-        // defaultValue={"Tag"}
-        // value={selected}
-        onChange={handleChange}
-      >
-        <div className="max-w-xl mt-1">
-          <div className="max-w-xl w-full cursor-default overflow-hidden rounded-lg bg-white text-left border sm:text-sm">
-            <Combobox.Input
-              placeholder="Search item..."
-              className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900"
-              // displayValue={(item) => item.name}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </div>
+          <RadioGroup.Root
+            defaultValue={params ? invoice?.paymentMethod ?? "Cash" : "Cash"}
+            onValueChange={onPaymentMethod}
+          >
+            <Flex gap="2" direction="row">
+              <Text as="label" size="2">
+                <Flex gap="2">
+                  <RadioGroup.Item value="Cash" /> Cash
+                </Flex>
+              </Text>
+              <Text as="label" size="2">
+                <Flex gap="2">
+                  <RadioGroup.Item value="Bank Transfer" /> Bank Transfer
+                </Flex>
+              </Text>
+            </Flex>
+          </RadioGroup.Root>
+
           <Transition
-            as={Fragment}
-            leave="transition ease-in duration-100"
+            show={paymentMethod == "Bank Transfer"}
+            enter="transition-opacity duration-500"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="transition-opacity duration-0"
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
-            afterLeave={() => setQuery("")}
           >
-            <Combobox.Options
-              className="z-10 absolute max-w-xl mt-1 max-h-60 overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm"
-              style={{ width: "calc(100% - 40px)" }}
+            <RadioGroup.Root
+              defaultValue={
+                params ? invoice?.paymentAccount ?? "Waqas" : "Waqas"
+              }
+              onValueChange={setPaymentAccount}
             >
-              <Combobox.Button
-                onClick={(value) => addNew(query)}
-                className="relative cursor-default ml-3 my-button"
-              >
-                Add
-                {/* <Button
-                  onClick={(value) => addNew(query)}
-                  className="font-medium"
-                >
-                  Add
-                </Button> */}
-              </Combobox.Button>
-              {filteredPeople.length === 0 && query !== "" ? (
-                <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
-                  Nothing found.
-                </div>
-              ) : (
-                filteredPeople.map((item, index) => (
-                  <Combobox.Option
-                    key={index}
-                    className={({ active }) =>
-                      `relative cursor-default select-none py-2 pl-5 pr-4 ${
-                        active ? "bg-teal-600 text-white" : "text-gray-900"
-                      }`
-                    }
-                    value={item}
-                  >
-                    {({ selected, active }) => (
-                      <>
-                        <span
-                          className={`block truncate ${
-                            selected ? "font-medium" : "font-normal"
-                          }`}
-                        >
-                          {item.description}
-                        </span>
-                        {selected ? (
-                          <span
-                            className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
-                              active ? "text-white" : "text-teal-600"
-                            }`}
-                          >
-                            {/* <CheckIcon
-                                className="h-5 w-5"
-                                aria-hidden="true"
-                              /> */}
-                          </span>
-                        ) : null}
-                      </>
-                    )}
-                  </Combobox.Option>
-                ))
-              )}
-            </Combobox.Options>
+              <Flex gap="2" direction="row">
+                <Text as="label" size="2">
+                  <Flex gap="2">
+                    <RadioGroup.Item value="Waqas" /> Waqas
+                  </Flex>
+                </Text>
+                <Text as="label" size="2">
+                  <Flex gap="2">
+                    <RadioGroup.Item value="Shaheryar" /> Shaheryar
+                  </Flex>
+                </Text>
+              </Flex>
+            </RadioGroup.Root>
           </Transition>
         </div>
-      </Combobox>
+      )}
+      <MyCombobox
+        id="item-combo"
+        handleChange={handleChange}
+        addNew={addNew}
+        searchItems={searchItems}
+        searchItemValue={"description"}
+        placeholder="Search item..."
+      />
       {selectedItems.length > 0 ? (
         <Table.Root variant="surface">
           <Table.Header>
@@ -507,7 +506,13 @@ const InvoiceForm = ({ params }: { params?: { id: string } }) => {
         onClick={onSubmitInvoice}
         style={{ marginBottom: "500px" }}
       >
-        {params ? "Update Invoice" : "Create Invoice"}
+        {params
+          ? isInvoice
+            ? "Update Invoice"
+            : "Update Estimate"
+          : isInvoice
+          ? "Create Invoice"
+          : "Create Estimate"}
         {isSubmitting && <Spinner />}
       </Button>
     </div>

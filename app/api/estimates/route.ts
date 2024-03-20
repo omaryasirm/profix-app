@@ -1,34 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/prisma/client";
-import { createCustomerSchema } from "../../validationSchemas";
+import { createInvoiceSchema } from "../../validationSchemas";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
 
-  const validation = createCustomerSchema.safeParse(body);
+  const validation = createInvoiceSchema.safeParse(body);
 
   if (!validation.success) {
     console.log(validation.error.format());
     return NextResponse.json(validation.error.format(), { status: 400 });
   }
 
-  const newCustomer = await prisma.customer.create({
+  const newInvoice = await prisma.invoice.create({
     data: {
+      customerId: body.customerId,
+      type: "ESTIMATE",
       name: body.name,
       contact: body.contact,
       vehicle: body.vehicle,
       registrationNo: body.registrationNo,
+      subtotal: body.subtotal,
+      tax: body.tax,
+      discount: body.discount,
+      total: body.total,
+      items: { create: body.items },
+    },
+    include: {
+      items: true,
     },
   });
 
-  return NextResponse.json(newCustomer, { status: 201 });
-}
-
-export async function GET(request: NextRequest) {
-  const customer = await prisma.customer.findMany();
-
-  if (!customer)
-    return NextResponse.json({ error: "Invalid customer" }, { status: 404 });
-
-  return NextResponse.json(customer);
+  return NextResponse.json(newInvoice, { status: 201 });
 }

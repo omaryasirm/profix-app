@@ -6,7 +6,7 @@ export const createInvoiceSchema = z.object({
   contact: z.string().max(255).optional(),
   registrationNo: z.string().max(255).optional(),
   vehicle: z.string().max(255).optional(),
-  paymentMethod: z.string().min(1).max(255),
+  paymentMethod: z.string().max(255).optional(),
   paymentAccount: z.string().max(255).optional(),
   items: z
     .object({

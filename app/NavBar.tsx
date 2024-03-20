@@ -1,23 +1,29 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
-import { TbFileInvoice } from "react-icons/tb";
 
 const NavBar = () => {
   const currentPath = usePathname();
 
   const links = [
-    { label: "Dahsboard", href: "/" },
+    // { label: "Dahsboard", href: "/" },
     { label: "Invoices", href: "/invoices" },
+    { label: "Estimates", href: "/estimates" },
   ];
 
   return (
     <nav className="flex space-x-6 border-b mb-5 px-5 h-14 items-center">
-      <Link href="/">
-        <TbFileInvoice />
-      </Link>
+      <Image
+        src="/profix_logo_crop.png"
+        alt="/"
+        width={70}
+        height={20}
+        style={{ paddingTop: "7px" }}
+        priority={true}
+      />
       <ul className="flex space-x-6">
         {links.map((link) => (
           <Link
