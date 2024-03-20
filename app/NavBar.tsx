@@ -1,13 +1,17 @@
 "use client";
 
+import { Skeleton } from "@/app/components";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import React from "react";
 import { useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
+
 import {
   Avatar,
   Box,
+  Button,
   Container,
   DropdownMenu,
   Flex,
@@ -25,7 +29,7 @@ const NavBar = () => {
   ];
 
   return (
-    <nav className="border-b mb-5 px-5 py-3">
+    <nav className="border-b mb-5 px-5 h-14 flex items-center">
       <Container>
         <Flex justify={"between"}>
           <Flex align={"center"} gap={"3"}>
@@ -53,6 +57,7 @@ const NavBar = () => {
             </ul>
           </Flex>
           <Box>
+            {status === "loading" && <Skeleton width="3rem" />}
             {status === "authenticated" && (
               <DropdownMenu.Root>
                 <DropdownMenu.Trigger>
@@ -68,14 +73,21 @@ const NavBar = () => {
                   <DropdownMenu.Label>
                     <Text size="2">{session.user!.email}</Text>
                   </DropdownMenu.Label>
-                  <DropdownMenu.Item>
-                    <Link href="/api/auth/signout">Log out</Link>
+                  <DropdownMenu.Item
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                  >
+                    <Text className="cursor-pointer">Log out</Text>
                   </DropdownMenu.Item>
                 </DropdownMenu.Content>
               </DropdownMenu.Root>
             )}
             {status === "unauthenticated" && (
-              <Link href="/api/auth/signin">Login</Link>
+              <Link
+                className="text-zinc-500 hover:text-zinc-800 transition-colors"
+                href="/api/auth/signin"
+              >
+                Login
+              </Link>
             )}
           </Box>
         </Flex>
