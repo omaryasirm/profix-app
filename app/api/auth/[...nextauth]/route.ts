@@ -14,6 +14,21 @@ const handler = NextAuth({
   session: {
     strategy: "jwt",
   },
+  callbacks: {
+    signIn: async ({ user }) => {
+      const userFound = await prisma.auth.findFirst({
+        where: {
+          email: user.email!,
+        },
+      });
+      // user.hasOwnProperty("emailVerified")
+      if (userFound) {
+        return true;
+      } else {
+        return false;
+      }
+    },
+  },
 });
 
 export { handler as GET, handler as POST };

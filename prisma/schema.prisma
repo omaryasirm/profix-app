@@ -63,6 +63,11 @@ model searchItems {
   description String @db.Text
 }
 
+model Auth {
+  id    Int @id @default(autoincrement())
+  email String
+}
+
 // google auth models
 
 model Account {
