@@ -5,7 +5,7 @@ interface Props {
 }
 
 const RenderInvoicePage = ({ params }: Props) => {
-  return <RenderPage params={params} />;
+  return <RenderPage params={params} display={true} />;
 };
 
 export default RenderInvoicePage;

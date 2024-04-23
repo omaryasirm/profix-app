@@ -10,12 +10,14 @@ import { useRouter } from "next/navigation";
 // import Html2Pdf from "js-html2pdf";
 import { AiOutlinePrinter } from "react-icons/ai";
 import { MdOutlineFileDownload } from "react-icons/md";
+import Image from "next/image";
 
 interface Props {
   params: { id: string };
+  display?: boolean;
 }
 
-const RenderPage = ({ params }: Props) => {
+const RenderPage = ({ params, display }: Props) => {
   const myFontSize = "10px";
   const router = useRouter();
   const ref = useRef<HTMLDivElement>();
@@ -96,38 +98,54 @@ const RenderPage = ({ params }: Props) => {
     <Spinner />
   ) : (
     <div>
-      <ReactToPrint
-        bodyClass="print-agreement"
-        content={() => ref.current}
-        trigger={() => (
-          <Button type="primary" style={{ padding: "10px 20px" }}>
-            <AiOutlinePrinter size={"1.2rem"} />
-            Print
-          </Button>
-        )}
-      />
-      <Button
-        style={{ marginLeft: "7px" }}
-        color="green"
-        // onClick={handleDownload}
-      >
-        <MdOutlineFileDownload size={"1.2rem"} />
-        Download
-      </Button>
-      <div style={{ display: "none" }}>
+      <div>
+        <ReactToPrint
+          bodyClass="print-agreement"
+          content={() => ref.current}
+          trigger={() => (
+            <Button color="cyan" style={{ padding: "10px 20px" }}>
+              <AiOutlinePrinter size={"1.2rem"} />
+              Print
+            </Button>
+          )}
+        />
+        {/* <Button
+          style={{ marginLeft: "7px" }}
+          color="green"
+          // onClick={handleDownload}
+        >
+          <MdOutlineFileDownload size={"1.2rem"} />
+          Download
+        </Button> */}
+      </div>
+
+      <div style={{ display: display ? "inherit" : "none" }}>
         <div
           ref={ref}
           id="element-to-download-as-pdf"
           style={{
             width: "200mm",
             height: "275mm",
-            paddingTop: "220px",
+            // paddingTop: "220px",
+            paddingTop: "80px",
             paddingLeft: "60px",
             paddingRight: "20px",
           }}
         >
+          <style>
+            {
+              
+            }
+          </style>
           {/* <Button onClick={() => console.log("ran")}>Print Invoice</Button> */}
-
+          <Image
+            src="/profix_logo_crop.png"
+            alt="/"
+            width={200}
+            height={20}
+            style={{ marginBottom: "30px" }}
+            priority={true}
+          />
           <div className="flex">
             <table
               className="border w-10 border-gray-200 mr-10"
@@ -156,7 +174,11 @@ const RenderPage = ({ params }: Props) => {
                 />
                 <TableRow1
                   name="Payment Account"
-                  value={invoice?.paymentAccount ?? ""}
+                  value={
+                    (invoice?.paymentAccount ?? "") == ""
+                      ? "None"
+                      : invoice?.paymentAccount
+                  }
                 />
               </tbody>
             </table>
@@ -167,9 +189,12 @@ const RenderPage = ({ params }: Props) => {
             >
               <tbody>
                 <TableRow1 name="Customer Name" value={invoice?.name ?? ""} />
-                <TableRow1 name="Address" value={invoice?.address ?? ""} />
                 <TableRow1 name="Contact" value={invoice?.contact ?? ""} />
                 <TableRow1 name="Vehicle" value={invoice?.vehicle ?? ""} />
+                <TableRow1
+                  name="Registration No"
+                  value={invoice?.registrationNo ?? ""}
+                />
               </tbody>
             </table>
           </div>
@@ -330,8 +355,8 @@ const RenderPage = ({ params }: Props) => {
           </table>
 
           <div className="text-left mt-16 text-sm">
-            <p className="font-bold mb-5">Terms and Conditions</p>
-            <p>
+            <p className="font-bold mb-5 text-sm">Terms and Conditions</p>
+            <p className="text-justify text-xs">
               Terms and conditions are a set of guidelines that specify the
               rules and obligations for using a service or product. They outline
               the rights and responsibilities of both the provider and the user,

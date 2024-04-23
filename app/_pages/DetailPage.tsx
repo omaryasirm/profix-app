@@ -3,11 +3,23 @@
 import { Spinner } from "@/app/components";
 import axios from "axios";
 import React, { useEffect, useRef, useState } from "react";
-import { Badge, Button, Flex, IconButton, Link, Table } from "@radix-ui/themes";
+import {
+  Badge,
+  Button,
+  Dialog,
+  Flex,
+  IconButton,
+  Link,
+  RadioGroup,
+  Table,
+  Text,
+  TextField,
+} from "@radix-ui/themes";
 import { Prisma } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { FaWhatsappSquare } from "react-icons/fa";
 import RenderPage from "./RenderPage";
+import { Transition } from "@headlessui/react";
 
 const DetailPage = ({
   params,
@@ -25,6 +37,9 @@ const DetailPage = ({
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
+  const [paymentMethod, setPaymentMethod] = useState<string | null>("");
+  const [paymentAccount, setPaymentAccount] = useState<string | null>("");
+
   const initialized = useRef(false);
 
   useEffect(() => {
@@ -41,8 +56,19 @@ const DetailPage = ({
     setIsLoading(false);
   };
 
+  const approveEstimate = async (_: any) => {
+    let data = {
+      paymentAccount: paymentAccount,
+      paymentMethod: paymentMethod,
+    };
+
+    let res = await axios.patch(`/api/estimates/${params.id}/approve`, data);
+
+    router.push(`/invoices/${params.id}`);
+  };
+
   const getWhatsappMessage = () => {
-    let message: string = `PROFIX Invoice\n Invoice No.${invoice?.id}\n Name ${invoice?.name}`;
+    let message: string = `PROFIX%20INVOICE%0A%0AInvoice%20No.${invoice?.id}%0AName ${invoice?.name}`;
 
     return message;
   };
@@ -54,10 +80,15 @@ const DetailPage = ({
         <Table.Cell className="flex">
           {props.name == "Contact" ? (
             <>
-              <Link href="https://wa.me/03341724932"> {props.value}</Link>
+              <Link href={`https://wa.me/${invoice?.contact}`}>
+                {" "}
+                {props.value}
+              </Link>
               <button className="ml-2 flex items-center">
                 <Link
-                  href={`https://wa.me/03341724932?text=${getWhatsappMessage()}`}
+                  href={`https://wa.me/${
+                    invoice?.contact
+                  }?text=${getWhatsappMessage()}`}
                 >
                   <FaWhatsappSquare size={"1.8rem"} color="green" />
                 </Link>
@@ -75,21 +106,109 @@ const DetailPage = ({
     <Spinner fullPage={true} />
   ) : (
     <div className="max-w-xl pb-10">
-      <Flex className="mb-3" justify={"between"}>
+      <Flex className="mb-3" justify={"between"} align={"end"}>
         <RenderPage params={params} />
-        <Button
-          variant="outline"
-          onClick={() =>
-            router.push(
-              isInvoice
-                ? `/invoices/${params.id}/edit`
-                : `/estimates/${params.id}/edit`
-            )
-          }
-        >
-          {isInvoice ? "Edit Invoice" : "Edit Estimate"}
-        </Button>
+        <Flex direction={"column"} gap="2">
+          {!isInvoice && (
+            <Dialog.Root>
+              <Dialog.Trigger>
+                <Button>Approve Estimate</Button>
+              </Dialog.Trigger>
+
+              <Dialog.Content style={{ maxWidth: 450 }}>
+                <Dialog.Title>Approve Estimate</Dialog.Title>
+                <Dialog.Description size="2" mb="4">
+                  Select payment method
+                </Dialog.Description>
+
+                <Flex direction="column" gap="3">
+                  <label>
+                    <Text as="div" size="2" mb="1" weight="bold">
+                      Payment Method
+                    </Text>
+                    <div
+                      id="item-combo"
+                      className="space-y-3"
+                      style={{ margin: "15px 2px" }}
+                    >
+                      <RadioGroup.Root
+                        defaultValue={"Cash"}
+                        onValueChange={setPaymentMethod}
+                      >
+                        <Flex gap="2" direction="row">
+                          <Text as="label" size="2">
+                            <Flex gap="2">
+                              <RadioGroup.Item value="Cash" /> Cash
+                            </Flex>
+                          </Text>
+                          <Text as="label" size="2">
+                            <Flex gap="2">
+                              <RadioGroup.Item value="Bank Transfer" /> Bank
+                              Transfer
+                            </Flex>
+                          </Text>
+                        </Flex>
+                      </RadioGroup.Root>
+
+                      <Transition
+                        show={paymentMethod == "Bank Transfer"}
+                        enter="transition-opacity duration-500"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="transition-opacity duration-0"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                      >
+                        <RadioGroup.Root
+                          defaultValue={"Waqas"}
+                          onValueChange={setPaymentAccount}
+                        >
+                          <Flex gap="2" direction="row">
+                            <Text as="label" size="2">
+                              <Flex gap="2">
+                                <RadioGroup.Item value="Waqas" /> Waqas
+                              </Flex>
+                            </Text>
+                            <Text as="label" size="2">
+                              <Flex gap="2">
+                                <RadioGroup.Item value="Shaheryar" /> Shaheryar
+                              </Flex>
+                            </Text>
+                          </Flex>
+                        </RadioGroup.Root>
+                      </Transition>
+                    </div>
+                  </label>
+                </Flex>
+
+                <Flex gap="3" mt="4" justify="end">
+                  <Dialog.Close>
+                    <Button variant="soft" color="gray">
+                      Cancel
+                    </Button>
+                  </Dialog.Close>
+                  <Dialog.Close>
+                    <Button onClick={approveEstimate}>Approve</Button>
+                  </Dialog.Close>
+                </Flex>
+              </Dialog.Content>
+            </Dialog.Root>
+          )}
+          <Button
+            variant="outline"
+            onClick={() =>
+              router.push(
+                isInvoice
+                  ? `/invoices/${params.id}/edit`
+                  : `/estimates/${params.id}/edit`
+              )
+            }
+          >
+            {isInvoice ? "Edit Invoice" : "Edit Estimate"}
+          </Button>
+        </Flex>
       </Flex>
+
       <Table.Root variant="surface">
         <Table.Body>
           <TableRowCustom

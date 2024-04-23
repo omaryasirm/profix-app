@@ -10,6 +10,9 @@ const nextConfig = {
       }
     ]
   },
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production",
+  },
   typescript: {
     // !! WARN !!
     // Dangerously allow production builds to successfully complete even if
