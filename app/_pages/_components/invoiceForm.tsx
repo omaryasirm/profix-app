@@ -114,7 +114,10 @@ const InvoiceForm = ({
       setSubtotal(res.data.subtotal);
       setTax(res.data.tax);
       setDiscount(res.data.discount);
+    } else {
+      setPaymentMethod("Cash");
     }
+
     getSearchItems();
   };
 
@@ -230,6 +233,8 @@ const InvoiceForm = ({
 
     if (value == "Cash") {
       setPaymentAccount("");
+    } else {
+      setPaymentAccount("Waqas");
     }
   };
 
@@ -332,19 +337,15 @@ const InvoiceForm = ({
           style={{ margin: "15px 2px" }}
         >
           <RadioGroup.Root
-            defaultValue={params ? invoice?.paymentMethod ?? "Cash" : "Cash"}
+            defaultValue={paymentMethod ?? "Cash"}
             onValueChange={onPaymentMethod}
           >
-            <Flex gap="2" direction="row">
+            <Flex gap="4" direction="row">
               <Text as="label" size="2">
-                <Flex gap="2">
-                  <RadioGroup.Item value="Cash" /> Cash
-                </Flex>
+                <RadioGroup.Item value="Cash" /> Cash
               </Text>
               <Text as="label" size="2">
-                <Flex gap="2">
-                  <RadioGroup.Item value="Bank Transfer" /> Bank Transfer
-                </Flex>
+                <RadioGroup.Item value="Bank Transfer" /> Bank Transfer
               </Text>
             </Flex>
           </RadioGroup.Root>
@@ -359,21 +360,18 @@ const InvoiceForm = ({
             leaveTo="opacity-0"
           >
             <RadioGroup.Root
-              defaultValue={
-                params ? invoice?.paymentAccount ?? "Waqas" : "Waqas"
-              }
+              defaultValue={paymentAccount ?? "Waqas"}
               onValueChange={setPaymentAccount}
             >
-              <Flex gap="2" direction="row">
+              <Flex gap="4" direction="row">
                 <Text as="label" size="2">
-                  <Flex gap="2">
-                    <RadioGroup.Item value="Waqas" /> Waqas
-                  </Flex>
+                  <RadioGroup.Item value="Waqas" /> Waqas
                 </Text>
                 <Text as="label" size="2">
-                  <Flex gap="2">
-                    <RadioGroup.Item value="Shaheryar" /> Shaheryar
-                  </Flex>
+                  <RadioGroup.Item value="Shaheryar" /> Shaheryar
+                </Text>
+                <Text as="label" size="2">
+                  <RadioGroup.Item value="Profix" /> Profix Garage
                 </Text>
               </Flex>
             </RadioGroup.Root>
