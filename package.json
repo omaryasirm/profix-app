@@ -22,7 +22,7 @@
     "js-html2pdf": "1.1.4",
     "next": "14.0.4",
     "next-auth": "4.24.7",
-    "prisma": "5.8.0",
+    "prisma": "5.11.0",
     "react": "^18",
     "react-device-detect": "2.2.3",
     "react-dom": "^18",
