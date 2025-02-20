@@ -84,6 +84,9 @@ model Account {
   id_token          String? @db.Text
   session_state     String?
 
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
@@ -95,6 +98,9 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model User {
@@ -105,6 +111,8 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model VerificationToken {
