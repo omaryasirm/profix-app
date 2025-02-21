@@ -132,21 +132,27 @@ const RenderPage = ({ params, display }: Props) => {
             paddingRight: "20px",
           }}
         >
-          <style>
-            {
-              
-            }
-          </style>
+          <style>{}</style>
           {/* <Button onClick={() => console.log("ran")}>Print Invoice</Button> */}
-          <Image
-            src="/profix_logo_crop.png"
-            alt="/"
-            width={200}
-            height={20}
-            style={{ marginBottom: "30px" }}
-            priority={true}
-          />
-          <div className="flex">
+          <div className="flex flex-row justify-between">
+            <Image
+              src="/profix_logo_crop.png"
+              alt="/"
+              width={200}
+              height={20}
+              style={{ marginBottom: "30px" }}
+              priority={true}
+            />
+            <div className="text-xs flex flex-col text-right space-y-0.5">
+              <span className="font-semibold">E5-C, Street no 2</span>
+              <span>Sadaat Town, Bedian Road</span>
+              <span>Cantt, Lahore</span>
+              <span className="mt-1 text-gray-600">0323 4374566</span>
+              <span className="text-gray-600">profixgarage.pk@gmail.com</span>
+            </div>
+          </div>
+
+          <div className="flex mt-10">
             <table
               className="border w-10 border-gray-200 mr-10"
               style={{ width: "500px" }}
@@ -354,7 +360,7 @@ const RenderPage = ({ params, display }: Props) => {
             </tbody>
           </table>
 
-          <div className="text-left mt-16 text-sm">
+          {/* <div className="text-left mt-16 text-sm">
             <p className="font-bold mb-5 text-sm">Terms and Conditions</p>
             <p className="text-justify text-xs">
               Terms and conditions are a set of guidelines that specify the
@@ -364,7 +370,7 @@ const RenderPage = ({ params, display }: Props) => {
               dispute resolution. By agreeing to the terms and conditions, users
               acknowledge and accept these terms as binding.
             </p>
-          </div>
+          </div> */}
 
           <div className="text-center mt-16 font-bold">
             <span>Thank you for choosing our services!</span>
