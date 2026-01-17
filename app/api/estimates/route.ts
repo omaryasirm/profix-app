@@ -33,3 +33,32 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json(newInvoice, { status: 201 });
 }
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "20");
+  const skip = (page - 1) * limit;
+
+  const [data, total] = await Promise.all([
+    prisma.invoice.findMany({
+      where: { type: "ESTIMATE" },
+      skip,
+      take: limit,
+      orderBy: { updatedAt: "desc" },
+    }),
+    prisma.invoice.count({
+      where: { type: "ESTIMATE" },
+    }),
+  ]);
+
+  return NextResponse.json({
+    data,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  });
+}

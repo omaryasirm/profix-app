@@ -1,12 +1,3 @@
-.radix-themes {
-    --default-font-family: var(--font-inter);
-}
-
-
-.rt-RadioGroupRoot:where(.rt-variant-surface) :where(.rt-RadioGroupButton[data-state=checked]) {
-    background-color: var(--accent-9) !important;
-}
-
 @media print {
     body {
         -webkit-print-color-adjust: exact;

@@ -1,14 +1,8 @@
 import React from "react";
 import TablePage from "../_pages/TablePage";
-import prisma from "@/prisma/client";
 
-const EstimatesPage = async () => {
-  const estimates = await prisma.invoice.findMany({
-    where: { type: { in: ["ESTIMATE"] } },
-    orderBy: [{ updatedAt: "desc" }],
-  });
-
-  return <TablePage estimates={estimates} />;
+const EstimatesPage = () => {
+  return <TablePage type="estimates" />;
 };
 
 export default EstimatesPage;

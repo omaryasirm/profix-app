@@ -1,16 +1,14 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { Button } from "@radix-ui/themes";
-import ReactToPrint, { useReactToPrint } from "react-to-print";
-import { Invoice } from "@prisma/client";
-import axios from "axios";
-import { Spinner } from "@/app/components";
-import { useRouter } from "next/navigation";
-// import Html2Pdf from "js-html2pdf";
-import { AiOutlinePrinter } from "react-icons/ai";
-import { MdOutlineFileDownload } from "react-icons/md";
+import React, { useRef } from "react";
+import { Button } from "@/components/ui/button";
+import ReactToPrint from "react-to-print";
+import { Printer } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useInvoice } from "@/hooks/api/useInvoices";
+import { formatDateLongPakistan, formatDateTimePakistan } from "@/lib/date-utils";
 
 interface Props {
   params: { id: string };
@@ -20,42 +18,27 @@ interface Props {
 const RenderPage = ({ params, display }: Props) => {
   const myFontSize = "10px";
   const router = useRouter();
-  const ref = useRef<HTMLDivElement>();
+  const ref = useRef<HTMLDivElement>(null);
 
-  const [isLoading, setIsLoading] = useState(true);
-
-  const [invoice, setInvoice] = useState<Invoice>();
-
-  const initialized = useRef(false);
-
-  useEffect(() => {
-    if (!initialized.current) {
-      initialized.current = true;
-      getInvoice();
-    }
-  }, []);
-
-  const getInvoice = async () => {
-    let res = await axios.get(`/api/invoices/${params.id}`);
-    setInvoice(res.data);
-    console.log(res.data);
-    setIsLoading(false);
-  };
+  const { data: invoice, isLoading } = useInvoice(params.id);
 
   const onBack = async () => {
     router.push("/invoices");
   };
 
   const getTax = () => {
-    return (invoice?.tax * invoice?.subtotal) / 100;
+    if (!invoice?.tax || !invoice?.subtotal) return 0;
+    return (invoice.tax * invoice.subtotal) / 100;
   };
 
   const getDiscount = () => {
-    return (invoice?.discount * invoice?.subtotal) / 100;
+    if (!invoice?.discount || !invoice?.subtotal) return 0;
+    return (invoice.discount * invoice.subtotal) / 100;
   };
 
   const getTotal = () => {
-    return invoice?.subtotal + getTax() - getDiscount();
+    const subtotal = invoice?.subtotal ?? 0;
+    return subtotal + getTax() - getDiscount();
   };
 
   // const handleDownload = useReactToPrint({
@@ -75,7 +58,7 @@ const RenderPage = ({ params, display }: Props) => {
   //   },
   // });
 
-  const TableRow1 = (props) => {
+  const TableRow1 = (props: { name: string; value: string | number }) => {
     return (
       <tr>
         <td
@@ -94,17 +77,38 @@ const RenderPage = ({ params, display }: Props) => {
       </tr>
     );
   };
-  return isLoading ? (
-    <Spinner />
-  ) : (
-    <div>
-      <div>
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <div className="mx-auto bg-white" style={{ width: "200mm", minHeight: "275mm", padding: "80px 60px 20px 20px" }}>
+          <Skeleton className="h-8 w-48 mb-4" />
+          <Skeleton className="h-4 w-full mb-2" />
+          <Skeleton className="h-4 w-full mb-2" />
+          <Skeleton className="h-4 w-3/4 mb-8" />
+          <Skeleton className="h-32 w-full mb-4" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!invoice) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <div className="text-center text-destructive">Invoice not found.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="">
+      <div className="mb-4">
         <ReactToPrint
           bodyClass="print-agreement"
-          content={() => ref.current}
+          content={() => ref.current!}
           trigger={() => (
-            <Button color="cyan" style={{ padding: "10px 20px" }}>
-              <AiOutlinePrinter size={"1.2rem"} />
+            <Button className="print:hidden">
+              <Printer className="mr-2 h-4 w-4" />
               Print
             </Button>
           )}
@@ -123,10 +127,10 @@ const RenderPage = ({ params, display }: Props) => {
         <div
           ref={ref}
           id="element-to-download-as-pdf"
+          className="mx-auto bg-white"
           style={{
             width: "200mm",
-            height: "275mm",
-            // paddingTop: "220px",
+            minHeight: "275mm",
             paddingTop: "80px",
             paddingLeft: "60px",
             paddingRight: "20px",
@@ -134,16 +138,16 @@ const RenderPage = ({ params, display }: Props) => {
         >
           <style>{}</style>
           {/* <Button onClick={() => console.log("ran")}>Print Invoice</Button> */}
-          <div className="flex flex-row justify-between">
+          <div className="flex flex-col sm:flex-row justify-between gap-4">
             <Image
               src="/profix_logo_crop.png"
               alt="/"
               width={200}
               height={20}
-              style={{ marginBottom: "30px" }}
+              className="mb-4 sm:mb-8"
               priority={true}
             />
-            <div className="text-xs flex flex-col text-right space-y-0.5">
+            <div className="text-xs flex flex-col text-left sm:text-right space-y-0.5">
               <span className="font-semibold">E5-C, Street no 2</span>
               <span>Sadaat Town, Bedian Road</span>
               <span>Cantt, Lahore</span>
@@ -152,26 +156,19 @@ const RenderPage = ({ params, display }: Props) => {
             </div>
           </div>
 
-          <div className="flex mt-10">
+          <div className="flex flex-col sm:flex-row mt-10 gap-4">
             <table
-              className="border w-10 border-gray-200 mr-10"
-              style={{ width: "500px" }}
+              className="border border-gray-200"
+              style={{ width: "100%", maxWidth: "500px" }}
             >
               <tbody>
                 <TableRow1
                   name="Invoice No."
-                  value={"PROFIX-" + invoice?.id ?? ""}
+                  value={invoice?.id ? `PROFIX-${invoice.id}` : ""}
                 />
                 <TableRow1
                   name="Invoice Date"
-                  value={
-                    new Date(invoice?.createdAt).getDate() +
-                      " " +
-                      new Date(invoice?.createdAt).toLocaleDateString("en-us", {
-                        month: "long",
-                        year: "numeric",
-                      }) ?? ""
-                  }
+                  value={formatDateTimePakistan(invoice?.createdAt)}
                 />
                 {/* 9 March, 2024 */}
                 <TableRow1
@@ -181,17 +178,17 @@ const RenderPage = ({ params, display }: Props) => {
                 <TableRow1
                   name="Payment Account"
                   value={
-                    (invoice?.paymentAccount ?? "") == ""
+                    !invoice?.paymentAccount || invoice.paymentAccount === ""
                       ? "None"
-                      : invoice?.paymentAccount
+                      : invoice.paymentAccount
                   }
                 />
               </tbody>
             </table>
 
             <table
-              className="border w-10 border-gray-200"
-              style={{ width: "500px" }}
+              className="border border-gray-200"
+              style={{ width: "100%", maxWidth: "500px" }}
             >
               <tbody>
                 <TableRow1 name="Customer Name" value={invoice?.name ?? ""} />
@@ -205,10 +202,11 @@ const RenderPage = ({ params, display }: Props) => {
             </table>
           </div>
 
-          <table
-            className=" w-10 border-gray-200 mt-10"
-            style={{ width: "100%" }}
-          >
+          <div className="overflow-x-auto mt-10">
+            <table
+              className="border border-gray-200"
+              style={{ width: "100%", minWidth: "600px" }}
+            >
             <thead>
               <tr>
                 <td
@@ -244,7 +242,7 @@ const RenderPage = ({ params, display }: Props) => {
               </tr>
             </thead>
             <tbody>
-              {invoice?.items.map((item, index) => (
+              {invoice?.items?.map((item: { description: string; qty: number; rate: number; amount: number }, index: number) => (
                 <tr key={index}>
                   <td
                     className="py-0.5 text-center text-xs border"
@@ -315,7 +313,7 @@ const RenderPage = ({ params, display }: Props) => {
                   className="py-0.5 text-center text-xs font-bold border"
                   style={{ fontSize: myFontSize }}
                 >
-                  Rs. {getTax() ?? "0.00"}
+                  Rs. {getTax().toFixed(2)}
                 </td>
               </tr>
               <tr>
@@ -337,7 +335,7 @@ const RenderPage = ({ params, display }: Props) => {
                   className="py-0.5 text-center font-bold text-xs border"
                   style={{ fontSize: myFontSize }}
                 >
-                  Rs. {getDiscount()}
+                  Rs. {getDiscount().toFixed(2)}
                 </td>
               </tr>
               <tr>
@@ -354,11 +352,12 @@ const RenderPage = ({ params, display }: Props) => {
                   className="py-0.5 text-center text-xs font-bold border bg-gray-100"
                   style={{ fontSize: myFontSize }}
                 >
-                  Rs. {getTotal()}
+                  Rs. {getTotal().toFixed(2)}
                 </td>
               </tr>
             </tbody>
           </table>
+          </div>
 
           {/* <div className="text-left mt-16 text-sm">
             <p className="font-bold mb-5 text-sm">Terms and Conditions</p>

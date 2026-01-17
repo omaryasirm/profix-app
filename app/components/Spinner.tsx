@@ -1,4 +1,3 @@
-import { Flex } from "@radix-ui/themes";
 import React from "react";
 
 const Spinner = ({ fullPage }: { fullPage?: boolean }) => {
@@ -18,13 +17,12 @@ const Spinner = ({ fullPage }: { fullPage?: boolean }) => {
   return (
     <div className={fullPage ?? false ? "h-full" : "flex"}>
       {fullPage ?? false ? (
-        <Flex
-          justify={"center"}
-          align={"center"}
+        <div
+          className="flex justify-center items-center"
           style={{ height: "calc(100% - 150px)" }}
         >
           {spinner()}
-        </Flex>
+        </div>
       ) : (
         spinner()
       )}

@@ -1,11 +1,11 @@
-import "@radix-ui/themes/styles.css";
-import "./theme-config.css";
 import "./globals.css";
 import type { Metadata } from "next";
 import { inter } from "./fonts";
-import { Theme } from "@radix-ui/themes";
 import NavBar from "./NavBar";
 import AuthProvider from "./auth/Provider";
+import { Providers } from "./providers";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: "Profix Invoice",
@@ -20,12 +20,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable}>
       <body className={inter.className}>
-        <AuthProvider>
-          <Theme accentColor="indigo" className="h-full">
+        <Providers>
+          <AuthProvider>
             <NavBar />
             <main className="p-5 h-full">{children}</main>
-          </Theme>
-        </AuthProvider>
+          </AuthProvider>
+        </Providers>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

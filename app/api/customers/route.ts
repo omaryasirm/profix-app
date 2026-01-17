@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/prisma/client";
 import { createCustomerSchema } from "../../validationSchemas";
+import { unstable_cache } from "next/cache";
+import { revalidateTag } from "next/cache";
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
@@ -21,14 +23,69 @@ export async function POST(request: NextRequest) {
     },
   });
 
+  revalidateTag("customers");
+
   return NextResponse.json(newCustomer, { status: 201 });
 }
 
+const getCachedCustomers = unstable_cache(
+  async (search: string, page: number, limit: number) => {
+    const skip = (page - 1) * limit;
+    const where = search
+      ? {
+          OR: [
+            { name: { contains: search, mode: "insensitive" as const } },
+            { contact: { contains: search, mode: "insensitive" as const } },
+            { vehicle: { contains: search, mode: "insensitive" as const } },
+            {
+              registrationNo: {
+                contains: search,
+                mode: "insensitive" as const,
+              },
+            },
+          ],
+        }
+      : {};
+
+    const [data, total] = await Promise.all([
+      prisma.customer.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { id: "desc" },
+        distinct: ["name", "contact"],
+      }),
+      prisma.customer.count({ where }),
+    ]);
+
+    return { data, total };
+  },
+  ["customers"],
+  { revalidate: 60, tags: ["customers"] }
+);
+
 export async function GET(request: NextRequest) {
-  const customer = await prisma.customer.findMany();
+  const { searchParams } = new URL(request.url);
+  const search = searchParams.get("search") || "";
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = parseInt(searchParams.get("limit") || "20");
 
-  if (!customer)
-    return NextResponse.json({ error: "Invalid customer" }, { status: 404 });
+  const { data, total } = await getCachedCustomers(search, page, limit);
 
-  return NextResponse.json(customer);
+  const response = NextResponse.json({
+    data,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  });
+
+  response.headers.set(
+    "Cache-Control",
+    "public, s-maxage=60, stale-while-revalidate=300"
+  );
+
+  return response;
 }
