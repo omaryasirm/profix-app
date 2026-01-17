@@ -3,16 +3,15 @@
 import * as React from "react";
 import { Check, ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import axios from "axios";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
-  CommandGroup,
   CommandInput,
   CommandItem,
-  CommandList,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -45,8 +44,8 @@ export function SearchCombobox<T extends Record<string, any>>({
 }: SearchComboboxProps<T>) {
   const [open, setOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
-  const MAX_ITEMS_DISPLAYED = 50;
   const queryClient = useQueryClient();
+  const [scrollElement, setScrollElement] = React.useState<HTMLDivElement | null>(null);
 
   // Extract the resource name from the endpoint (e.g., "/api/searchItems" -> "searchItems")
   const resourceName = searchEndpoint.split('/').pop() || searchEndpoint;
@@ -55,9 +54,7 @@ export function SearchCombobox<T extends Record<string, any>>({
   const { data, isLoading } = useQuery({
     queryKey: [resourceName, "all"],
     queryFn: async () => {
-      const response = await axios.get(
-        `${searchEndpoint}?page=1&limit=1000`
-      );
+      const response = await axios.get(`${searchEndpoint}?limit=10000`);
       return Array.isArray(response.data)
         ? response.data
         : response.data.data || [];
@@ -122,9 +119,13 @@ export function SearchCombobox<T extends Record<string, any>>({
     );
   }, [allItems, searchQuery, displayKey]);
 
-  // Limit displayed items for performance
-  const items = filteredItems.slice(0, MAX_ITEMS_DISPLAYED);
-  const hasMoreItems = filteredItems.length > MAX_ITEMS_DISPLAYED;
+  // Virtualize the list for performance
+  const virtualizer = useVirtualizer({
+    count: filteredItems.length,
+    getScrollElement: () => scrollElement,
+    estimateSize: () => 32, // Approximate height of each item
+    overscan: 5, // Render 5 extra items above/below viewport
+  });
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -137,7 +138,7 @@ export function SearchCombobox<T extends Record<string, any>>({
           disabled={disabled}
         >
           {value
-            ? items.find((item: T) => item[searchKey] === value[searchKey])?.[
+            ? filteredItems.find((item: T) => item[searchKey] === value[searchKey])?.[
                 displayKey
               ] || value[displayKey] || placeholder
             : placeholder}
@@ -158,66 +159,82 @@ export function SearchCombobox<T extends Record<string, any>>({
             onValueChange={setSearchQuery}
             className="h-9"
           />
-          <CommandList>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-6">
-                <Loader2 className="h-4 w-4 animate-spin" />
-              </div>
-            ) : (
-              <>
-                {items.length === 0 ? (
-                  <CommandEmpty>
-                    {onAddNew && searchQuery ? (
-                      <div className="flex justify-center py-2 px-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAddNew(searchQuery)}
-                          className="gap-2 font-normal text-muted-foreground hover:text-foreground"
-                        >
-                          <Plus className="h-4 w-4" />
-                          <span>
-                            Create <span className="font-medium text-foreground">&quot;{searchQuery}&quot;</span>
-                          </span>
-                        </Button>
-                      </div>
-                    ) : (
-                      "No results found."
-                    )}
-                  </CommandEmpty>
-                ) : (
-                  <CommandGroup>
-                    {items.map((item: T) => (
-                      <CommandItem
-                        key={item[searchKey]}
-                        value={String(item[displayKey])}
-                        onSelect={() => {
-                          onValueChange(item);
-                          setSearchQuery("");
-                          setOpen(false);
-                        }}
+          {isLoading ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          ) : (
+            <>
+              {filteredItems.length === 0 ? (
+                <CommandEmpty>
+                  {onAddNew && searchQuery ? (
+                    <div className="flex justify-center py-2 px-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleAddNew(searchQuery)}
+                        className="gap-2 font-normal text-muted-foreground hover:text-foreground"
                       >
-                        {item[displayKey]}
-                        <Check
-                          className={cn(
-                            "ml-auto h-4 w-4",
-                            value?.[searchKey] === item[searchKey]
-                              ? "opacity-100"
-                              : "opacity-0"
-                          )}
-                        />
-                      </CommandItem>
-                    ))}
-                    {hasMoreItems && (
-                      <div className="px-2 py-1.5 text-xs text-muted-foreground text-center border-t">
-                        Showing {items.length} of {filteredItems.length} results. Keep typing to narrow down...
-                      </div>
-                    )}
-                  </CommandGroup>
-                )}
-              </>
-            )}
-          </CommandList>
+                        <Plus className="h-4 w-4" />
+                        <span>
+                          Create <span className="font-medium text-foreground">&quot;{searchQuery}&quot;</span>
+                        </span>
+                      </Button>
+                    </div>
+                  ) : (
+                    "No results found."
+                  )}
+                </CommandEmpty>
+              ) : (
+                <div
+                  ref={setScrollElement}
+                  className="max-h-[300px] overflow-y-auto overscroll-contain"
+                >
+                  <div
+                    style={{
+                      height: `${virtualizer.getTotalSize() + 50}px`,
+                      width: "100%",
+                      position: "relative"
+                    }}
+                  >
+                    {virtualizer.getVirtualItems().map((virtualItem) => {
+                      const item = filteredItems[virtualItem.index] as T;
+                      return (
+                        <CommandItem
+                          key={item[searchKey]}
+                          data-index={virtualItem.index}
+                          ref={virtualizer.measureElement}
+                          value={String(item[displayKey])}
+                          onSelect={() => {
+                            onValueChange(item);
+                            setSearchQuery("");
+                            setOpen(false);
+                          }}
+                          style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            width: "100%",
+                            transform: `translateY(${virtualItem.start}px)`,
+                          }}
+                        >
+                          {item[displayKey]}
+                          <Check
+                            className={cn(
+                              "ml-auto h-4 w-4",
+                              value?.[searchKey] === item[searchKey]
+                                ? "opacity-100"
+                                : "opacity-0"
+                            )}
+                          />
+                        </CommandItem>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </Command>
       </PopoverContent>
     </Popover>

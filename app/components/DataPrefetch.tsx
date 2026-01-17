@@ -16,7 +16,7 @@ export default function DataPrefetch() {
     queryClient.prefetchQuery({
       queryKey: ["/api/customers", "all"],
       queryFn: async () => {
-        const response = await axios.get("/api/customers?page=1&limit=1000");
+        const response = await axios.get("/api/customers?limit=10000");
         return Array.isArray(response.data)
           ? response.data
           : response.data.data || [];
@@ -28,7 +28,7 @@ export default function DataPrefetch() {
     queryClient.prefetchQuery({
       queryKey: ["/api/searchItems", "all"],
       queryFn: async () => {
-        const response = await axios.get("/api/searchItems?page=1&limit=1000");
+        const response = await axios.get("/api/searchItems?limit=10000");
         return Array.isArray(response.data)
           ? response.data
           : response.data.data || [];
