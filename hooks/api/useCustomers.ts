@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import axios from "axios";
 
 interface Customer {
@@ -47,6 +47,7 @@ export function useCustomers(query: CustomersQuery = {}) {
       const response = await axios.get(`/api/customers?${params.toString()}`);
       return response.data;
     },
+    placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
@@ -77,9 +78,12 @@ export function useCreateCustomer() {
       const response = await axios.post("/api/customers", data);
       return response.data;
     },
-    onSuccess: () => {
-      // Invalidate all customer queries to refetch
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
+    onSuccess: async () => {
+      // Invalidate and refetch all customer queries
+      await queryClient.invalidateQueries({
+        queryKey: ["customers"],
+        refetchType: "all"
+      });
     },
   });
 }
@@ -103,10 +107,16 @@ export function useUpdateCustomer() {
       const response = await axios.patch(`/api/customers/${id}`, data);
       return response.data;
     },
-    onSuccess: (_, variables) => {
-      // Invalidate specific customer and all customers list
-      queryClient.invalidateQueries({ queryKey: ["customers", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
+    onSuccess: async (_, variables) => {
+      // Invalidate and refetch specific customer and all customers list
+      await queryClient.invalidateQueries({
+        queryKey: ["customers", variables.id],
+        refetchType: "all"
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["customers"],
+        refetchType: "all"
+      });
     },
   });
 }
@@ -119,9 +129,31 @@ export function useDeleteCustomer() {
       const response = await axios.delete(`/api/customers/${id}`);
       return response.data;
     },
-    onSuccess: () => {
-      // Invalidate all customer queries
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
+    onSuccess: async (data, id) => {
+      // Remove customer from cache immediately
+      queryClient.setQueriesData(
+        { queryKey: ["customers"] },
+        (old: any) => {
+          if (!old) return old;
+
+          if (Array.isArray(old)) {
+            return old.filter((customer: any) => customer.id !== id);
+          }
+
+          if (old.data) {
+            return {
+              ...old,
+              data: old.data.filter((customer: any) => customer.id !== id),
+              pagination: old.pagination ? {
+                ...old.pagination,
+                total: Math.max(0, old.pagination.total - 1),
+              } : undefined,
+            };
+          }
+
+          return old;
+        }
+      );
     },
   });
 }

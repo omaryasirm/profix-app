@@ -55,10 +55,16 @@ export function useCreateEstimate() {
       const response = await axios.post("/api/estimates", data);
       return response.data;
     },
-    onSuccess: () => {
-      // Invalidate estimates list and related customer queries
-      queryClient.invalidateQueries({ queryKey: ["estimates"] });
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
+    onSuccess: async () => {
+      // Invalidate and refetch estimates list and related customer queries
+      await queryClient.invalidateQueries({
+        queryKey: ["estimates"],
+        refetchType: "all"
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["customers"],
+        refetchType: "all"
+      });
     },
   });
 }
@@ -77,11 +83,20 @@ export function useUpdateEstimate() {
       const response = await axios.patch(`/api/estimates/${id}`, data);
       return response.data;
     },
-    onSuccess: (_, variables) => {
-      // Invalidate specific estimate, estimates list, and related customer queries
-      queryClient.invalidateQueries({ queryKey: ["estimates", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["estimates"] });
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
+    onSuccess: async (_, variables) => {
+      // Invalidate and refetch specific estimate, estimates list, and related customer queries
+      await queryClient.invalidateQueries({
+        queryKey: ["estimates", variables.id],
+        refetchType: "all"
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["estimates"],
+        refetchType: "all"
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["customers"],
+        refetchType: "all"
+      });
     },
   });
 }
@@ -106,12 +121,46 @@ export function useApproveEstimate() {
       );
       return response.data;
     },
-    onSuccess: (_, variables) => {
-      // Invalidate estimates and invoices lists since estimate becomes invoice
-      queryClient.invalidateQueries({ queryKey: ["estimates", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["estimates"] });
-      queryClient.invalidateQueries({ queryKey: ["invoices"] });
-      queryClient.invalidateQueries({ queryKey: ["invoices", variables.id] });
+    onSuccess: async (_, variables) => {
+      // Invalidate and refetch estimates and invoices lists since estimate becomes invoice
+      await queryClient.invalidateQueries({
+        queryKey: ["estimates", variables.id],
+        refetchType: "all"
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["estimates"],
+        refetchType: "all"
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["invoices"],
+        refetchType: "all"
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["invoices", variables.id],
+        refetchType: "all"
+      });
+    },
+  });
+}
+
+export function useDeleteEstimate() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const response = await axios.delete(`/api/estimates/${id}`);
+      return response.data;
+    },
+    onSuccess: async () => {
+      // Invalidate and refetch estimates list and related customer queries
+      await queryClient.invalidateQueries({
+        queryKey: ["estimates"],
+        refetchType: "all"
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["customers"],
+        refetchType: "all"
+      });
     },
   });
 }

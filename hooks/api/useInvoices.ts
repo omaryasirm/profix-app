@@ -105,10 +105,16 @@ export function useCreateInvoice() {
       const response = await axios.post("/api/invoices", data);
       return response.data;
     },
-    onSuccess: () => {
-      // Invalidate invoices list and related customer queries
-      queryClient.invalidateQueries({ queryKey: ["invoices"] });
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
+    onSuccess: async () => {
+      // Invalidate and refetch invoices list and related customer queries
+      await queryClient.invalidateQueries({
+        queryKey: ["invoices"],
+        refetchType: "all"
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["customers"],
+        refetchType: "all"
+      });
     },
   });
 }
@@ -127,11 +133,42 @@ export function useUpdateInvoice() {
       const response = await axios.patch(`/api/invoices/${id}`, data);
       return response.data;
     },
-    onSuccess: (_, variables) => {
-      // Invalidate specific invoice, invoices list, and related customer queries
-      queryClient.invalidateQueries({ queryKey: ["invoices", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["invoices"] });
-      queryClient.invalidateQueries({ queryKey: ["customers"] });
+    onSuccess: async (_, variables) => {
+      // Invalidate and refetch specific invoice, invoices list, and related customer queries
+      await queryClient.invalidateQueries({
+        queryKey: ["invoices", variables.id],
+        refetchType: "all"
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["invoices"],
+        refetchType: "all"
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["customers"],
+        refetchType: "all"
+      });
+    },
+  });
+}
+
+export function useDeleteInvoice() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const response = await axios.delete(`/api/invoices/${id}`);
+      return response.data;
+    },
+    onSuccess: async () => {
+      // Invalidate and refetch invoices list and related customer queries
+      await queryClient.invalidateQueries({
+        queryKey: ["invoices"],
+        refetchType: "all"
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["customers"],
+        refetchType: "all"
+      });
     },
   });
 }

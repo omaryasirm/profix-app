@@ -3,7 +3,7 @@
 import { DetailSkeleton } from "@/components/ui/skeleton-variants";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Trash2 } from "lucide-react";
 import RenderPage from "./RenderPage";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,10 +27,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
-import { useInvoice } from "@/hooks/api/useInvoices";
-import { useEstimate, useApproveEstimate } from "@/hooks/api/useEstimates";
-import { formatDateLongPakistan, formatDateTimePakistan } from "@/lib/date-utils";
+import { useInvoice, useDeleteInvoice } from "@/hooks/api/useInvoices";
+import { useEstimate, useApproveEstimate, useDeleteEstimate } from "@/hooks/api/useEstimates";
+import { formatDateTimePakistan } from "@/lib/date-utils";
 
 const DetailPage = ({
   params,
@@ -46,10 +47,13 @@ const DetailPage = ({
   const isLoading = isInvoice ? invoiceQuery.isLoading : estimateQuery.isLoading;
 
   const approveEstimate = useApproveEstimate();
+  const deleteInvoice = useDeleteInvoice();
+  const deleteEstimate = useDeleteEstimate();
 
   const [paymentMethod, setPaymentMethod] = useState<string>("Cash");
   const [paymentAccount, setPaymentAccount] = useState<string>("Waqas");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const handleApproveEstimate = async () => {
     try {
@@ -64,6 +68,20 @@ const DetailPage = ({
       router.push(`/invoices/${params.id}`);
     } catch (error) {
       console.error("Error approving estimate:", error);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      if (isInvoice) {
+        await deleteInvoice.mutateAsync(parseInt(params.id));
+        router.push("/invoices");
+      } else {
+        await deleteEstimate.mutateAsync(parseInt(params.id));
+        router.push("/estimates");
+      }
+    } catch (error: any) {
+      alert(error.response?.data?.error || "Failed to delete");
     }
   };
 
@@ -103,10 +121,12 @@ const DetailPage = ({
 
   if (isLoading) {
     return (
-      <div className="container mx-auto md:px-4 md:py-6 max-w-4xl">
-        <div className="md:hidden px-3 py-4">
+      <div className="mx-auto md:px-4 max-w-4xl">
+        {/* Mobile: No card */}
+        <div className="md:hidden px-3">
           <DetailSkeleton />
         </div>
+        {/* Desktop: Card */}
         <div className="hidden md:block">
           <DetailSkeleton />
         </div>
@@ -128,7 +148,7 @@ const DetailPage = ({
     <div className="flex flex-wrap gap-2">
       <RenderPage params={params} />
       {!isInvoice && (
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen} modal={false}>
           <DialogTrigger asChild>
             <Button>Approve Estimate</Button>
           </DialogTrigger>
@@ -210,6 +230,14 @@ const DetailPage = ({
       >
         {isInvoice ? "Edit Invoice" : "Edit Estimate"}
       </Button>
+      <Button
+        variant="outline"
+        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+        onClick={() => setDeleteDialogOpen(true)}
+      >
+        <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+        Delete
+      </Button>
     </div>
   );
 
@@ -249,6 +277,8 @@ const DetailPage = ({
         </Table>
       </div>
 
+      <Separator className="md:hidden" />
+
       {/* Items Table */}
       <div>
         <h2 className="text-lg font-semibold mb-3 md:hidden">Items</h2>
@@ -280,6 +310,8 @@ const DetailPage = ({
         </div>
       </div>
 
+      <Separator className="md:hidden" />
+
       {/* Totals */}
       <div>
         <h2 className="text-lg font-semibold mb-3 md:hidden">Summary</h2>
@@ -299,10 +331,11 @@ const DetailPage = ({
   );
 
   return (
-    <div className="container mx-auto md:px-4 md:py-6 max-w-4xl">
+    <div className="mx-auto md:px-4 max-w-4xl">
       {/* Mobile: No cards, minimal padding */}
-      <div className="md:hidden px-3 py-4">
+      <div className="md:hidden px-3">
         {actionButtons}
+        <Separator className="mb-6 mt-2" />
         {detailsContent}
       </div>
 
@@ -391,6 +424,32 @@ const DetailPage = ({
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} modal={false}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete {isInvoice ? "Invoice" : "Estimate"}</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this {isInvoice ? "invoice" : "estimate"}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleteInvoice.isPending || deleteEstimate.isPending}
+            >
+              {(deleteInvoice.isPending || deleteEstimate.isPending) ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

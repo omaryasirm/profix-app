@@ -23,7 +23,7 @@ export default function RootLayout({
         <Providers>
           <AuthProvider>
             <NavBar />
-            <main className="p-5 h-full">{children}</main>
+            <main className="px-5 md:py-5 h-full pb-5">{children}</main>
           </AuthProvider>
         </Providers>
         <Analytics />

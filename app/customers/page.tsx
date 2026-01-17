@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,13 +31,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { TableSkeleton } from "@/components/ui/skeleton-variants";
-import { Trash2, Edit, Plus } from "lucide-react";
+import { Trash2, Edit, Plus, X, Loader2 } from "lucide-react";
 import { useCustomers, useDeleteCustomer } from "@/hooks/api/useCustomers";
 
 const CustomersPageContent = () => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const [page, setPage] = useState(parseInt(searchParams.get("page") || "1"));
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState<number | null>(null);
@@ -48,12 +45,12 @@ const CustomersPageContent = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
-      setPage(1);
+      setPage(1); // Reset to first page when search changes
     }, 300);
     return () => clearTimeout(timer);
   }, [search]);
 
-  const { data, isLoading, error } = useCustomers({
+  const { data, isLoading, isFetching, error } = useCustomers({
     page,
     limit: 20,
     search: debouncedSearch,
@@ -63,13 +60,15 @@ const CustomersPageContent = () => {
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
-    router.push(`/customers?page=${newPage}${debouncedSearch ? `&search=${debouncedSearch}` : ""}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async () => {
     if (!customerToDelete) return;
+
     try {
       await deleteCustomer.mutateAsync(customerToDelete);
+      // Only close dialog after successful delete
       setDeleteDialogOpen(false);
       setCustomerToDelete(null);
     } catch (error: any) {
@@ -125,20 +124,47 @@ const CustomersPageContent = () => {
   const customers = data?.data || [];
   const totalPages = data?.pagination.totalPages || 1;
 
+  const isSearching = search !== debouncedSearch;
+  const isRefetching = isFetching && !isLoading; // Fetching but not initial load
+
   const tableContent = (
     <>
-      <div className="mb-4">
-        <Input
-          placeholder="Search customers..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          className="max-w-sm"
-        />
+      <div className="mb-4 space-y-2">
+        <div className="flex items-center gap-2">
+          <div className="relative max-w-sm">
+            <Input
+              placeholder="Search customers..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pr-8"
+            />
+            {search && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 top-0 h-full px-2 hover:bg-transparent"
+                onClick={() => setSearch("")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          {isSearching && (
+            <span className="text-sm text-muted-foreground">Searching...</span>
+          )}
+        </div>
+        {debouncedSearch && !isSearching && (
+          <div className="text-sm text-muted-foreground">
+            Found {data?.pagination.total || 0} customer{data?.pagination.total !== 1 ? 's' : ''}
+          </div>
+        )}
       </div>
-      <div className="overflow-x-auto -mx-3 md:mx-0">
+      <div className="overflow-x-auto -mx-3 md:mx-0 relative">
+            {isRefetching && (
+              <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center z-10">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            )}
             <Table>
               <TableHeader>
                 <TableRow>
@@ -155,7 +181,7 @@ const CustomersPageContent = () => {
                 {customers.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8">
-                      No customers found
+                      {debouncedSearch ? "No customers found matching your search" : "No customers found"}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -321,7 +347,7 @@ const CustomersPageContent = () => {
         </Card>
       </div>
 
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} modal={false}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Customer</DialogTitle>
@@ -335,6 +361,7 @@ const CustomersPageContent = () => {
             <Button
               variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
+              disabled={deleteCustomer.isPending}
             >
               Cancel
             </Button>

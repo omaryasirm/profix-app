@@ -125,15 +125,15 @@ const TablePageContent = ({ type }: Props) => {
                   </TableRow>
                 ) : (
                   invoices.map((invoice) => (
-                    <TableRow key={invoice.id}>
+                    <TableRow
+                      key={invoice.id}
+                      className="cursor-pointer hover:bg-muted/50 select-none active:bg-muted"
+                      onClick={() => router.push(`/${type}/${invoice.id}`)}
+                      style={{ WebkitTapHighlightColor: 'transparent' }}
+                    >
                       <TableCell>{invoice.id}</TableCell>
-                      <TableCell>
-                        <Link
-                          href={`/${type}/${invoice.id}`}
-                          className="text-primary hover:underline"
-                        >
-                          {invoice.name}
-                        </Link>
+                      <TableCell className="font-medium">
+                        {invoice.name}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
                         {formatDatePakistan(invoice.createdAt)}

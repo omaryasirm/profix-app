@@ -48,9 +48,12 @@ export function SearchCombobox<T extends Record<string, any>>({
   const MAX_ITEMS_DISPLAYED = 50;
   const queryClient = useQueryClient();
 
+  // Extract the resource name from the endpoint (e.g., "/api/searchItems" -> "searchItems")
+  const resourceName = searchEndpoint.split('/').pop() || searchEndpoint;
+
   // Fetch all items immediately in background
   const { data, isLoading } = useQuery({
-    queryKey: [searchEndpoint, "all"],
+    queryKey: [resourceName, "all"],
     queryFn: async () => {
       const response = await axios.get(
         `${searchEndpoint}?page=1&limit=1000`
@@ -64,9 +67,46 @@ export function SearchCombobox<T extends Record<string, any>>({
 
   const handleAddNew = async (query: string) => {
     if (onAddNew) {
-      await onAddNew(query);
-      // Immediately invalidate and refetch the cache
-      queryClient.invalidateQueries({ queryKey: [searchEndpoint, "all"] });
+      // Create optimistic item with temp ID
+      const tempId = `temp_${Date.now()}`;
+      const optimisticItem = {
+        [searchKey]: tempId,
+        [displayKey]: query,
+        _isTemp: true, // Mark as temporary
+      } as T;
+
+      // Add to cache immediately
+      queryClient.setQueryData([resourceName, "all"], (old: any) => {
+        const currentData = Array.isArray(old) ? old : old?.data || [];
+        return [optimisticItem, ...currentData];
+      });
+
+      // Close dropdown immediately
+      setOpen(false);
+      setSearchQuery("");
+
+      // Select the optimistic item
+      onValueChange(optimisticItem);
+
+      // Call API in background
+      try {
+        await onAddNew(query);
+
+        // Remove temp item after API succeeds
+        queryClient.setQueryData([resourceName, "all"], (old: any) => {
+          const currentData = Array.isArray(old) ? old : old?.data || [];
+          return currentData.filter((item: T) => item[searchKey] !== tempId);
+        });
+
+        // Mutation's onSuccess will now refetch and add the real item
+      } catch (error) {
+        // Remove temp item on error
+        queryClient.setQueryData([resourceName, "all"], (old: any) => {
+          const currentData = Array.isArray(old) ? old : old?.data || [];
+          return currentData.filter((item: T) => item[searchKey] !== tempId);
+        });
+        console.error("Failed to add item:", error);
+      }
     }
   };
 
@@ -132,11 +172,7 @@ export function SearchCombobox<T extends Record<string, any>>({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={async () => {
-                            await handleAddNew(searchQuery);
-                            setSearchQuery("");
-                            setOpen(false);
-                          }}
+                          onClick={() => handleAddNew(searchQuery)}
                           className="gap-2 font-normal text-muted-foreground hover:text-foreground"
                         >
                           <Plus className="h-4 w-4" />

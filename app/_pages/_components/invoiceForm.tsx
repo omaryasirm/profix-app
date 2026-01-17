@@ -188,14 +188,8 @@ const InvoiceForm = ({
 
   const handleAddNewItem = async (text: string) => {
     try {
-      const res = await axios.post("/api/searchItems", { description: text });
-      const newItem: Item = {
-        description: text,
-        qty: 1,
-        rate: 0,
-        amount: 0,
-      };
-      setSelectedItems((prevState) => [...prevState, newItem]);
+      // Only make the API call - SearchCombobox handles adding to form via onValueChange
+      await axios.post("/api/searchItems", { description: text });
     } catch (error) {
       console.error("Failed to create item:", error);
     }
@@ -411,8 +405,8 @@ const InvoiceForm = ({
                   <TableCell>{item.description}</TableCell>
                   <TableCell>
                     <Input
-                      type="number"
-                      value={item.qty || 1}
+                      type="text"
+                      value={item.qty}
                       placeholder="Qty"
                       className="w-20"
                       onChange={(e) => {
@@ -425,8 +419,8 @@ const InvoiceForm = ({
                   </TableCell>
                   <TableCell>
                     <Input
-                      type="number"
-                      value={item.rate || 0}
+                      type="text"
+                      value={item.rate}
                       placeholder="Rate"
                       className="w-28"
                       onChange={(e) => {
@@ -462,7 +456,7 @@ const InvoiceForm = ({
         <div className="flex items-center gap-2">
           <span>Tax %:</span>
           <Input
-            type="number"
+            type="text"
             value={tax}
             placeholder="Tax"
             className="w-20"
@@ -473,7 +467,7 @@ const InvoiceForm = ({
         <div className="flex items-center gap-2">
           <span>Discount %:</span>
           <Input
-            type="number"
+            type="text"
             value={discount}
             placeholder="Discount"
             className="w-20"

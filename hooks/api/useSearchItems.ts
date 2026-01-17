@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import axios from "axios";
 
 interface SearchItem {
@@ -40,6 +40,7 @@ export function useSearchItems(query: SearchItemsQuery = {}) {
       const response = await axios.get(`/api/searchItems?${params.toString()}`);
       return response.data;
     },
+    placeholderData: keepPreviousData,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }
@@ -65,9 +66,12 @@ export function useCreateSearchItem() {
       const response = await axios.post("/api/searchItems", data);
       return response.data;
     },
-    onSuccess: () => {
-      // Invalidate all searchItems queries
-      queryClient.invalidateQueries({ queryKey: ["searchItems"] });
+    onSuccess: async () => {
+      // Invalidate and refetch all searchItems queries
+      await queryClient.invalidateQueries({
+        queryKey: ["searchItems"],
+        refetchType: "all"
+      });
     },
   });
 }
@@ -86,10 +90,16 @@ export function useUpdateSearchItem() {
       const response = await axios.patch(`/api/searchItems/${id}`, data);
       return response.data;
     },
-    onSuccess: (_, variables) => {
-      // Invalidate specific item and all items list
-      queryClient.invalidateQueries({ queryKey: ["searchItems", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["searchItems"] });
+    onSuccess: async (_, variables) => {
+      // Invalidate and refetch specific item and all items list
+      await queryClient.invalidateQueries({
+        queryKey: ["searchItems", variables.id],
+        refetchType: "all"
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["searchItems"],
+        refetchType: "all"
+      });
     },
   });
 }
@@ -102,9 +112,31 @@ export function useDeleteSearchItem() {
       const response = await axios.delete(`/api/searchItems/${id}`);
       return response.data;
     },
-    onSuccess: () => {
-      // Invalidate all searchItems queries
-      queryClient.invalidateQueries({ queryKey: ["searchItems"] });
+    onSuccess: async (data, id) => {
+      // Remove item from cache immediately
+      queryClient.setQueriesData(
+        { queryKey: ["searchItems"] },
+        (old: any) => {
+          if (!old) return old;
+
+          if (Array.isArray(old)) {
+            return old.filter((item: any) => item.id !== id);
+          }
+
+          if (old.data) {
+            return {
+              ...old,
+              data: old.data.filter((item: any) => item.id !== id),
+              pagination: old.pagination ? {
+                ...old.pagination,
+                total: Math.max(0, old.pagination.total - 1),
+              } : undefined,
+            };
+          }
+
+          return old;
+        }
+      );
     },
   });
 }

@@ -59,3 +59,26 @@ export async function PATCH(
 
   return NextResponse.json(updatedInvoice);
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const invoice = await prisma.invoice.findUnique({
+    where: { id: parseInt(params.id) },
+  });
+
+  if (!invoice)
+    return NextResponse.json({ error: "Invalid estimate" }, { status: 404 });
+
+  // Delete associated items first, then the estimate
+  await prisma.item.deleteMany({
+    where: { invoiceId: invoice.id },
+  });
+
+  await prisma.invoice.delete({
+    where: { id: invoice.id },
+  });
+
+  return NextResponse.json({ message: "Estimate deleted successfully" });
+}

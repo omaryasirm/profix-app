@@ -37,78 +37,89 @@ const NewCustomerPage = () => {
     }
   };
 
+  const formContent = (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="name">Name *</Label>
+        <Input
+          id="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          className="mt-1"
+        />
+      </div>
+      <div>
+        <Label htmlFor="contact">Contact</Label>
+        <Input
+          id="contact"
+          value={contact}
+          onChange={(e) => setContact(e.target.value)}
+          className="mt-1"
+        />
+      </div>
+      <div>
+        <Label htmlFor="vehicle">Vehicle</Label>
+        <Input
+          id="vehicle"
+          value={vehicle}
+          onChange={(e) => setVehicle(e.target.value)}
+          className="mt-1"
+        />
+      </div>
+      <div>
+        <Label htmlFor="registrationNo">Registration No</Label>
+        <Input
+          id="registrationNo"
+          value={registrationNo}
+          onChange={(e) => setRegistrationNo(e.target.value)}
+          className="mt-1"
+        />
+      </div>
+
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.back()}
+        >
+          Cancel
+        </Button>
+        <Button type="submit" disabled={createCustomer.isPending}>
+          {createCustomer.isPending ? (
+            <>
+              <Spinner />
+              <span className="ml-2">Creating...</span>
+            </>
+          ) : (
+            "Create Customer"
+          )}
+        </Button>
+      </div>
+    </form>
+  );
+
   return (
-    <div className="container mx-auto px-4 py-6 max-w-2xl">
-      <Card>
+    <div className="container mx-auto md:px-4 md:py-6 max-w-2xl">
+      {/* Mobile: No card */}
+      <div className="md:hidden px-3 py-4 space-y-6">
+        <h1 className="text-2xl font-bold">Create New Customer</h1>
+        {formContent}
+      </div>
+
+      {/* Desktop: Card */}
+      <Card className="hidden md:block">
         <CardHeader>
           <CardTitle>Create New Customer</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="name">Name *</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="contact">Contact</Label>
-              <Input
-                id="contact"
-                value={contact}
-                onChange={(e) => setContact(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="vehicle">Vehicle</Label>
-              <Input
-                id="vehicle"
-                value={vehicle}
-                onChange={(e) => setVehicle(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="registrationNo">Registration No</Label>
-              <Input
-                id="registrationNo"
-                value={registrationNo}
-                onChange={(e) => setRegistrationNo(e.target.value)}
-                className="mt-1"
-              />
-            </div>
-
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.back()}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createCustomer.isPending}>
-                {createCustomer.isPending ? (
-                  <>
-                    <Spinner />
-                    <span className="ml-2">Creating...</span>
-                  </>
-                ) : (
-                  "Create Customer"
-                )}
-              </Button>
-            </div>
-          </form>
+          {formContent}
         </CardContent>
       </Card>
     </div>

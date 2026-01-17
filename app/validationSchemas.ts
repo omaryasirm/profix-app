@@ -3,11 +3,11 @@ import { z } from "zod";
 export const createInvoiceSchema = z.object({
   customerId: z.number().min(1),
   name: z.string().max(255),
-  contact: z.string().max(255).optional(),
-  registrationNo: z.string().max(255).optional(),
-  vehicle: z.string().max(255).optional(),
-  paymentMethod: z.string().max(255).optional(),
-  paymentAccount: z.string().max(255).optional(),
+  contact: z.string().max(255).nullable().optional(),
+  registrationNo: z.string().max(255).nullable().optional(),
+  vehicle: z.string().max(255).nullable().optional(),
+  paymentMethod: z.string().max(255).nullable().optional(),
+  paymentAccount: z.string().max(255).nullable().optional(),
   items: z
     .object({
       description: z.string().min(1).max(255),
@@ -24,9 +24,9 @@ export const createInvoiceSchema = z.object({
 
 export const createCustomerSchema = z.object({
   name: z.string().max(255),
-  contact: z.string().max(255).optional(),
-  registrationNo: z.string().max(255).optional(),
-  vehicle: z.string().max(255).optional(),
+  contact: z.string().max(255).nullable().optional(),
+  registrationNo: z.string().max(255).nullable().optional(),
+  vehicle: z.string().max(255).nullable().optional(),
 });
 
 export const createSearchItemSchema = z.object({
