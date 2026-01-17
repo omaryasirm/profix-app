@@ -127,6 +127,13 @@ export function SearchCombobox<T extends Record<string, any>>({
     overscan: 5, // Render 5 extra items above/below viewport
   });
 
+  // Scroll to top when search query changes
+  React.useEffect(() => {
+    if (scrollElement) {
+      scrollElement.scrollTop = 0;
+    }
+  }, [searchQuery, scrollElement]);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
