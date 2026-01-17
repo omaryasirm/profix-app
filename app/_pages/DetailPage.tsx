@@ -13,7 +13,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -148,75 +147,7 @@ const DetailPage = ({
     <div className="flex flex-wrap gap-2">
       <RenderPage params={params} />
       {!isInvoice && (
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen} modal={false}>
-          <DialogTrigger asChild>
-            <Button>Approve Estimate</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Approve Estimate</DialogTitle>
-              <DialogDescription>
-                Select payment method and account
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div>
-                <Label className="mb-2 block">Payment Method</Label>
-                <RadioGroup
-                  value={paymentMethod}
-                  onValueChange={setPaymentMethod}
-                >
-                  <div className="flex gap-4">
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="Cash" id="cash" />
-                      <Label htmlFor="cash">Cash</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="Bank Transfer" id="bank" />
-                      <Label htmlFor="bank">Bank Transfer</Label>
-                    </div>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              {paymentMethod === "Bank Transfer" && (
-                <div>
-                  <Label className="mb-2 block">Payment Account</Label>
-                  <RadioGroup
-                    value={paymentAccount}
-                    onValueChange={setPaymentAccount}
-                  >
-                    <div className="flex flex-wrap gap-4">
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Waqas" id="waqas" />
-                        <Label htmlFor="waqas">Waqas</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Shaheryar" id="shaheryar" />
-                        <Label htmlFor="shaheryar">Shaheryar</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="Profix" id="profix" />
-                        <Label htmlFor="profix">Profix Garage</Label>
-                      </div>
-                    </div>
-                  </RadioGroup>
-                </div>
-              )}
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button
-                onClick={handleApproveEstimate}
-                disabled={approveEstimate.isPending}
-              >
-                {approveEstimate.isPending ? "Approving..." : "Approve"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => setDialogOpen(true)}>Approve Estimate</Button>
       )}
       <Button
         variant="outline"
@@ -446,6 +377,76 @@ const DetailPage = ({
               disabled={deleteInvoice.isPending || deleteEstimate.isPending}
             >
               {(deleteInvoice.isPending || deleteEstimate.isPending) ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen} modal={false}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Approve Estimate</DialogTitle>
+            <DialogDescription>
+              Select payment method and account
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label className="mb-2 block">Payment Method</Label>
+              <RadioGroup
+                value={paymentMethod}
+                onValueChange={setPaymentMethod}
+              >
+                <div className="flex gap-4">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="Cash" id="cash" />
+                    <Label htmlFor="cash">Cash</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="Bank Transfer" id="bank" />
+                    <Label htmlFor="bank">Bank Transfer</Label>
+                  </div>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {paymentMethod === "Bank Transfer" && (
+              <div>
+                <Label className="mb-2 block">Payment Account</Label>
+                <RadioGroup
+                  value={paymentAccount}
+                  onValueChange={setPaymentAccount}
+                >
+                  <div className="flex flex-wrap gap-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="Waqas" id="waqas" />
+                      <Label htmlFor="waqas">Waqas</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="Shaheryar" id="shaheryar" />
+                      <Label htmlFor="shaheryar">Shaheryar</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="Profix" id="profix" />
+                      <Label htmlFor="profix">Profix Garage</Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleApproveEstimate}
+              disabled={approveEstimate.isPending}
+            >
+              {approveEstimate.isPending ? "Approving..." : "Approve"}
             </Button>
           </DialogFooter>
         </DialogContent>

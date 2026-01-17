@@ -606,6 +606,149 @@ const handlePageChange = (page: number) => {
 
 ---
 
+## Dialog & UI Issues
+
+### 21. Dialog Causing Page Layout Shift
+
+**Problem:**
+Dialog opens and scrollbar disappears, causing entire page to shift right.
+
+**Example:**
+```typescript
+// Default behavior locks body scroll
+<Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+  <DialogContent>Delete item?</DialogContent>
+</Dialog>
+// Page shifts when dialog opens
+```
+
+**Solution:**
+```typescript
+<Dialog open={dialogOpen} onOpenChange={setDialogOpen} modal={false}>
+  <DialogContent>Delete item?</DialogContent>
+</Dialog>
+// modal={false} prevents body scroll lock and layout shift
+```
+
+**Lesson:** Always use `modal={false}` on dialogs to prevent layout shift.
+
+---
+
+### 22. Dialog Closing Immediately After Click
+
+**Problem:**
+Dialog closes instantly instead of showing operation in progress.
+
+**Example:**
+```typescript
+const handleDelete = async () => {
+  setDialogOpen(false);  // Closes immediately
+  await deleteItem.mutateAsync(id);
+};
+```
+
+**Solution:**
+```typescript
+const handleDelete = async () => {
+  try {
+    await deleteItem.mutateAsync(id);  // Wait for completion
+    // Only close on success
+    setDialogOpen(false);
+  } catch (error) {
+    alert("Failed to delete");
+    // Keep dialog open on error
+  }
+};
+
+// Show loading state in dialog
+<Button onClick={handleDelete} disabled={deleteItem.isPending}>
+  {deleteItem.isPending ? "Deleting..." : "Delete"}
+</Button>
+```
+
+**Lesson:** Close dialog only after operation completes successfully.
+
+---
+
+### 23. Race Condition on Multiple Deletes
+
+**Problem:**
+Deleting multiple items in sequence causes items to reappear or duplicate.
+
+**Example:**
+```typescript
+onSuccess: async () => {
+  await queryClient.invalidateQueries({ queryKey: ["items"] });
+  // Background refetch conflicts with next delete
+}
+
+// Delete item 1 → refetch starts
+// Delete item 2 → refetch from item 1 completes, restores item 2
+// Result: Item 2 reappears!
+```
+
+**Solution:**
+```typescript
+onSuccess: async (data, id) => {
+  // Remove from cache immediately, no refetch
+  queryClient.setQueriesData(
+    { queryKey: ["items"] },
+    (old: any) => {
+      if (!old) return old;
+
+      if (old.data) {
+        return {
+          ...old,
+          data: old.data.filter((item: any) => item.id !== id),
+          pagination: old.pagination ? {
+            ...old.pagination,
+            total: Math.max(0, old.pagination.total - 1),
+          } : undefined,
+        };
+      }
+
+      return old;
+    }
+  );
+  // No invalidateQueries call - prevents race condition
+}
+```
+
+**Lesson:** For deletes, use `setQueriesData` instead of `invalidateQueries` to avoid race conditions.
+
+---
+
+### 24. Dialog Button Nested Inside Trigger
+
+**Problem:**
+Dialog structured incorrectly with Dialog as child of button, causing JSX errors or event issues.
+
+**Example:**
+```typescript
+// ❌ WRONG
+<Button>
+  <Dialog>
+    <DialogContent>...</DialogContent>
+  </Dialog>
+</Button>
+```
+
+**Solution:**
+```typescript
+// ✅ RIGHT - Dialog is sibling to button, not child
+<>
+  <Button onClick={() => setDialogOpen(true)}>Delete</Button>
+
+  <Dialog open={dialogOpen} onOpenChange={setDialogOpen} modal={false}>
+    <DialogContent>...</DialogContent>
+  </Dialog>
+</>
+```
+
+**Lesson:** Dialog and trigger button should be siblings in JSX, not parent-child.
+
+---
+
 ## Quick Reference: Common Fixes
 
 | Problem | Solution |
@@ -620,3 +763,6 @@ const handlePageChange = (page: number) => {
 | Foreign key constraint | Delete related records first |
 | Duplicate dropdown items | Use `distinct` in Prisma query |
 | Page doesn't scroll | `window.scrollTo({ top: 0 })` |
+| Dialog layout shift | Add `modal={false}` to Dialog |
+| Multiple delete race condition | Use `setQueriesData` instead of `invalidateQueries` |
+| Dialog closes too early | `await` mutation, close only on success |

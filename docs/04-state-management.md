@@ -181,29 +181,55 @@ export function useUpdateCustomer() {
 
 ### Delete Mutation Pattern
 
+**IMPORTANT:** For delete mutations, use immediate cache updates instead of `invalidateQueries` to avoid race conditions when deleting multiple items consecutively.
+
 ```typescript
-export function useDeleteInvoice() {
+export function useDeleteSearchItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (id: number) => {
-      const response = await axios.delete(`/api/invoices/${id}`);
+      const response = await axios.delete(`/api/searchItems/${id}`);
       return response.data;
     },
-    onSuccess: async () => {
-      // Invalidate related queries
-      await queryClient.invalidateQueries({
-        queryKey: ["invoices"],
-        refetchType: "all"
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ["customers"],
-        refetchType: "all"
-      });
+    onSuccess: async (data, id) => {
+      // Remove item from cache immediately (no refetch to avoid race condition)
+      queryClient.setQueriesData(
+        { queryKey: ["searchItems"] },
+        (old: any) => {
+          if (!old) return old;
+
+          if (Array.isArray(old)) {
+            return old.filter((item: any) => item.id !== id);
+          }
+
+          if (old.data) {
+            return {
+              ...old,
+              data: old.data.filter((item: any) => item.id !== id),
+              pagination: old.pagination ? {
+                ...old.pagination,
+                total: Math.max(0, old.pagination.total - 1),
+              } : undefined,
+            };
+          }
+
+          return old;
+        }
+      );
     },
   });
 }
 ```
+
+**Why not use `invalidateQueries` for deletes?**
+- Background refetch can conflict with subsequent deletes (race condition)
+- Causes items to briefly reappear or duplicate
+- Slower - requires round trip to server
+
+**When to use `invalidateQueries` vs `setQueriesData`:**
+- **Use `setQueriesData`**: Delete operations (immediate, no race conditions)
+- **Use `invalidateQueries`**: Create/Update operations (server is source of truth)
 
 ## Loading States
 

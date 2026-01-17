@@ -197,6 +197,134 @@ return (
 </div>
 ```
 
+## Dialog Patterns
+
+### Confirmation Dialog (Delete, Approve, etc.)
+
+**CRITICAL:** Always use `modal={false}` to prevent layout shift caused by scrollbar appearing/disappearing.
+
+```typescript
+const [dialogOpen, setDialogOpen] = useState(false);
+const [itemToDelete, setItemToDelete] = useState<number | null>(null);
+
+const deleteItem = useDeleteItem();
+
+const handleDelete = async () => {
+  if (!itemToDelete) return;
+
+  try {
+    await deleteItem.mutateAsync(itemToDelete);
+    // Only close dialog after successful delete
+    setDialogOpen(false);
+    setItemToDelete(null);
+  } catch (error: any) {
+    alert(error.response?.data?.error || "Failed to delete");
+  }
+};
+
+return (
+  <>
+    {/* Trigger button */}
+    <Button
+      variant="destructive"
+      onClick={() => {
+        setItemToDelete(item.id);
+        setDialogOpen(true);
+      }}
+    >
+      <Trash2 className="mr-2 h-4 w-4" />
+      Delete
+    </Button>
+
+    {/* Dialog rendered separately, outside of button */}
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen} modal={false}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete Item</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete this item? This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={() => setDialogOpen(false)}
+            disabled={deleteItem.isPending}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={deleteItem.isPending}
+          >
+            {deleteItem.isPending ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </>
+);
+```
+
+**Key Points:**
+1. **Use `modal={false}`** - Prevents scrollbar issues and layout shift
+2. **Separate dialog from trigger** - Dialog should be a sibling, not child of button
+3. **Keep dialog open during API call** - Show loading state ("Deleting...")
+4. **Disable buttons during operation** - Prevent double-clicks
+5. **Close only on success** - Keep open if error occurs
+
+### Dialog with Form Inputs
+
+```typescript
+const [dialogOpen, setDialogOpen] = useState(false);
+const [formData, setFormData] = useState({ method: "Cash", account: "Waqas" });
+
+const handleSubmit = async () => {
+  try {
+    await mutation.mutateAsync(formData);
+    setDialogOpen(false);
+  } catch (error) {
+    console.error("Error:", error);
+  }
+};
+
+return (
+  <>
+    <Button onClick={() => setDialogOpen(true)}>Open Form</Button>
+
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen} modal={false}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Form Title</DialogTitle>
+          <DialogDescription>Form description</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-4">
+          {/* Form inputs */}
+          <RadioGroup
+            value={formData.method}
+            onValueChange={(value) => setFormData({ ...formData, method: value })}
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="Cash" id="cash" />
+              <Label htmlFor="cash">Cash</Label>
+            </div>
+          </RadioGroup>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit} disabled={mutation.isPending}>
+            {mutation.isPending ? "Submitting..." : "Submit"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </>
+);
+```
+
 ## Form Patterns
 
 ### Dual Mobile/Desktop Layout

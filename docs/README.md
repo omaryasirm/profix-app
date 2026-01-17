@@ -102,7 +102,8 @@ GOOGLE_CLIENT_SECRET="..."
 
 **Always:**
 - Use `keepPreviousData` for pagination/search
-- Await `invalidateQueries` in `onSuccess`
+- Await `invalidateQueries` in `onSuccess` for create/update
+- Use `setQueriesData` for deletes (not `invalidateQueries`)
 - Add `refetchType: "all"` to invalidations
 - Match query keys across queries and mutations
 
@@ -114,12 +115,53 @@ const { data } = useQuery({
   placeholderData: keepPreviousData,  // Prevent flashing
 });
 
+// For create/update
 onSuccess: async () => {
   await queryClient.invalidateQueries({
     queryKey: ["customers"],
     refetchType: "all"  // Update all queries
   });
 }
+
+// For delete
+onSuccess: async (data, id) => {
+  queryClient.setQueriesData(
+    { queryKey: ["customers"] },
+    (old: any) => ({
+      ...old,
+      data: old.data.filter((item: any) => item.id !== id)
+    })
+  );
+  // No refetch - prevents race conditions
+}
+```
+
+### Dialog Usage
+
+**Always:**
+- Use `modal={false}` to prevent layout shift
+- Close dialog only after operation completes
+- Show loading state during operation
+- Disable buttons while pending
+
+**Example:**
+```typescript
+const handleDelete = async () => {
+  try {
+    await deleteItem.mutateAsync(id);
+    setDialogOpen(false);  // Close only on success
+  } catch (error) {
+    alert("Failed");  // Keep open on error
+  }
+};
+
+<Dialog open={dialogOpen} onOpenChange={setDialogOpen} modal={false}>
+  <DialogFooter>
+    <Button onClick={handleDelete} disabled={deleteItem.isPending}>
+      {deleteItem.isPending ? "Deleting..." : "Delete"}
+    </Button>
+  </DialogFooter>
+</Dialog>
 ```
 
 ### Mobile Responsiveness
@@ -179,7 +221,9 @@ onSuccess: async () => {
 | Issue | Solution | Doc Reference |
 |-------|----------|---------------|
 | Cache not updating | Check query key match | [04-state-management.md](./04-state-management.md) |
-| Duplicate items | Remove double refetch | [06-common-pitfalls.md](./06-common-pitfalls.md) |
+| Duplicate items on delete | Use `setQueriesData` not `invalidateQueries` | [04-state-management.md](./04-state-management.md) |
+| Dialog layout shift | Add `modal={false}` | [05-ui-patterns.md](./05-ui-patterns.md) |
+| Dialog closes too early | Close only after successful operation | [05-ui-patterns.md](./05-ui-patterns.md) |
 | Skeleton flashing | Use `keepPreviousData` | [04-state-management.md](./04-state-management.md) |
 | Text selection on tap | Add `select-none` | [05-ui-patterns.md](./05-ui-patterns.md) |
 | Validation errors | Use `.nullable().optional()` | [06-common-pitfalls.md](./06-common-pitfalls.md) |
@@ -360,7 +404,10 @@ Brief description of changes
 
 ### Recent Improvements
 
-- **Cache Management**: Fixed query key mismatches
+- **Delete Operations**: Fixed race conditions by using immediate cache updates instead of refetch
+- **Dialog UX**: Added `modal={false}` to prevent layout shift from scrollbar
+- **Dialog Loading States**: Dialogs now stay open during operations with loading indicators
+- **Cache Management**: Fixed query key mismatches for proper invalidation
 - **Mobile UX**: Removed cards, added touch feedback
 - **Search**: Implemented debouncing and local filtering
 - **Performance**: Added data prefetching
